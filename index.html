@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Pokémon Battle Royale Simulation</title>
+  <style>
+    body {
+      background-color: #1e1e24;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+
+    #winnerAnnounce {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffcb05;
+      height: 35px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(255, 203, 5, 0.4);
+    }
+
+    #topControls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+      background: #2b2b36;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid #2a75bb;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .speed-control input[type="range"] {
+      width: 130px;
+      cursor: pointer;
+    }
+
+    #setupMenu {
+      background-color: #2b2b36;
+      border: 2px solid #2a75bb;
+      border-radius: 12px;
+      padding: 15px 25px;
+      margin-bottom: 15px;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+    }
+
+    .pokemon-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .pokemon-option {
+      display: flex;
+      align-items: center;
+      background: #1e1e24;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+    }
+
+    .pokemon-option input {
+      margin-right: 10px;
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 22px;
+      font-size: 15px;
+      font-weight: bold;
+      background-color: #ffcb05;
+      color: #2a75bb;
+      border: 2px solid #2a75bb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background-color: #ffe066;
+    }
+
+    button.secondary {
+      background-color: #3a3a4a;
+      color: #ffffff;
+      border-color: #555566;
+    }
+
+    button.secondary:hover {
+      background-color: #4a4a5a;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    canvas {
+      background-color: #2b2b36;
+      border: 5px solid #ffcb05;
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    .side-panel {
+      background-color: #2b2b36;
+      border: 2px solid #2a75bb;
+      border-radius: 12px;
+      padding: 15px;
+      width: 440px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+
+    .side-panel h3 {
+      margin-top: 0;
+      text-align: center;
+      color: #ffcb05;
+      border-bottom: 1px solid #2a75bb;
+      padding-bottom: 8px;
+    }
+
+    #leaderboardList, #placementList {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+    }
+
+    .lb-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 2px;
+      font-size: 12px;
+      border-bottom: 1px solid #3a3a4a;
+    }
+
+    .lb-item.dead {
+      opacity: 0.4;
+      text-decoration: line-through;
+    }
+
+    .lb-name {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .lb-dmg {
+      color: #ff7675;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+
+    /* Zweispaltige Platzierungs-Liste */
+    .place-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      font-size: 12px;
+      border-bottom: 1px solid #3a3a4a;
+      border-radius: 4px;
+      background: #1e1e24;
+    }
+
+    .place-item.alive {
+      border-left: 3px solid #2ed573;
+    }
+
+    .place-item.dead {
+      opacity: 0.5;
+      border-left: 3px solid #ff4757;
+    }
+
+    .place-rank {
+      font-weight: bold;
+      width: 24px;
+      color: #ffcb05;
+      font-size: 11px;
+    }
+
+    .place-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Pokémon Battle Royale Arena</h1>
+  <div id="winnerAnnounce">Mache deine Auswahl und starte den Kampf!</div>
+
+  <div id="topControls">
+    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️ Menü ausblenden</button>
+    <div class="speed-control">
+      <span>🏃 Tempo:</span>
+      <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSpeedMultiplier(this.value)">
+      <span id="speedVal">1.0x</span>
+    </div>
+  </div>
+
+  <div id="setupMenu">
+    <div style="font-weight: bold; text-align: center;">Wähle die Teilnehmer für den Kampf:</div>
+    <div class="pokemon-grid" id="pokemonSelectionList"></div>
+    <div class="button-group">
+      <button class="secondary" onclick="selectAll(true)">Alle auswählen</button>
+      <button class="secondary" onclick="selectAll(false)">Alle abwählen</button>
+      <button onclick="startSelectedMatch()">⚔️ Kampf starten!</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- Links: Platzierungs-Ranking (Zweispaltig) -->
+    <div id="placementPanel" class="side-panel">
+      <h3>🏆 Platzierung</h3>
+      <div id="placementList"></div>
+    </div>
+
+    <canvas id="arenaCanvas" width="750" height="750"></canvas>
+
+    <!-- Rechts: Schadens-Rangliste (Zweispaltig) -->
+    <div id="leaderboard" class="side-panel">
+      <h3>📊 Schadens-Rangliste</h3>
+      <div id="leaderboardList"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("arenaCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const arenaRadius = canvas.width / 2 - 12;
+
+    let speedMultiplier = 1.0;
+
+    const typeColors = {
+      burn: "#ff4757",        
+      blitz: "#feca57",       
+      slow_feld: "#48dbfb",   
+      crit: "#ffffff",        
+      curse_dot: "#a29bfe",   
+      aoe_slam: "#747d8c",    
+      snipe_shot: "#0984e3",  
+      scorch: "#ff7f50",      
+      barrier: "#ff9ff3",     
+      leech_seed: "#2ed573"   
+    };
+
+    // Alle Pokémon haben 300 HP und 0.5 Speed
+    const pokemonTemplates = [
+      { name: "Panferno",       color: "#e25822", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
+      { name: "Rotom",          color: "#f39c12", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
+      { name: "Rexblisar",      color: "#74b9ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 140, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
+      { name: "Impi",  		color: "#0984e3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Pikachu",        color: "#ffeaa7", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
+      { name: "Gengar",         color: "#a29bfe", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Arkani",         color: "#d63031", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
+      { name: "Relaxo",         color: "#636e72", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+      { name: "Tengulist",      color: "#2ed573", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
+      { name: "Stolloss",       color: "#a4b0be", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+      { name: "Pelipper",       color: "#70a1ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
+      { name: "Rabigator",      color: "#ff6348", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
+      { name: "Zytomega",       color: "#1dd1a1", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/579.png" },
+      { name: "Fermicula",      color: "#57606f", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140,  type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/632.png" },
+      { name: "Brigaron",       color: "#10ac84", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/652.png" },
+      { name: "Fiaro",          color: "#ff4757", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png" },
+      { name: "Elezard",        color: "#eccc68", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/695.png" },
+      { name: "Durengard",      color: "#5f27cd", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png" },
+      { name: "Silvarro",       color: "#009432", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
+      { name: "Curelei",        color: "#ff9ff3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
+      { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 140, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
+      { name: "Lauchzelot",     color: "#f8c291", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
+      { name: "Olangaar",       color: "#8395a7", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
+      { name: "Katapuldra",     color: "#00d2d3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 260, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
+      { name: "Arceus",         color: "#c8d6e5", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
+      { name: "Pamomamo",       color: "#feca57", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Eisenbündel",    color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
+      { name: "Bisasam",    	color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
+    ];
+
+    let activePokemons = [];
+    let projectiles = [];
+    let visualEffects = [];
+    let scorchTrails = [];
+    let matchStarted = false;
+    let gameOver = false;
+    let lastTime = 0;
+    let eliminationOrder = [];
+
+    function updateSpeedMultiplier(val) {
+      speedMultiplier = parseFloat(val);
+      document.getElementById("speedVal").innerText = speedMultiplier.toFixed(1) + "x";
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById("setupMenu");
+      const btn = document.getElementById("toggleMenuBtn");
+      if (menu.style.display === "none") {
+        menu.style.display = "block";
+        btn.innerText = "⚙️ Menü ausblenden";
+      } else {
+        menu.style.display = "none";
+        btn.innerText = "⚙️ Menü einblenden / Auswählen";
+      }
+    }
+
+    function buildSelectionMenu() {
+      const container = document.getElementById("pokemonSelectionList");
+      container.innerHTML = "";
+      pokemonTemplates.forEach((p, idx) => {
+        const label = document.createElement("label");
+        label.className = "pokemon-option";
+        label.innerHTML = `<input type="checkbox" value="${idx}" checked> ${p.name}`;
+        container.appendChild(label);
+      });
+    }
+
+    function selectAll(check) {
+      document.querySelectorAll("#pokemonSelectionList input").forEach(cb => cb.checked = check);
+    }
+
+    class Pokemon {
+      constructor(template, id) {
+        this.id = id;
+        this.name = template.name;
+        this.color = template.color;
+        this.typeColor = typeColors[template.type] || template.color;
+        this.maxHp = template.maxHp;
+        this.hp = template.maxHp;
+        this.attack = template.attack;
+        this.defense = template.defense;
+        this.baseSpeed = template.speed;
+        this.attackSpeed = template.attackSpeed;
+        this.attackRange = template.attackRange;
+        this.type = template.type;
+        this.attackCooldown = 0;
+        this.radius = 20;
+
+        this.totalDamageDealt = 0;
+        this.isSlowed = false;
+
+        this.dots = [];
+        this.curseStacks = 0;
+        this.barrierTimer = 0;
+        this.barrierHp = 0;
+        this.maxBarrierHp = Math.floor(template.maxHp * 0.05);
+
+        this.imageLoaded = false;
+        this.image = new Image();
+        this.image.src = template.img;
+        this.image.onload = () => { this.imageLoaded = true; };
+
+        // Zufälliger Spawn in der Arena
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * (arenaRadius - 40);
+        this.x = centerX + r * Math.cos(angle);
+        this.y = centerY + r * Math.sin(angle);
+
+        // Zufällige Bewegungsrichtung
+        const moveAngle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(moveAngle) * this.baseSpeed;
+        this.vy = Math.sin(moveAngle) * this.baseSpeed;
+      }
+
+      applyDoT(type, duration, dps, attacker = null) {
+        if (type === "curse") {
+          this.curseStacks++;
+          return;
+        }
+        this.dots.push({ type, duration, dps, attacker });
+      }
+
+      update(deltaTime) {
+        if (this.hp <= 0) return;
+
+        let effectiveSpeed = this.baseSpeed;
+        this.isSlowed = false;
+
+        activePokemons.forEach(other => {
+          if (other.type === "slow_feld" && other.hp > 0 && other !== this) {
+            const dist = Math.hypot(other.x - this.x, other.y - this.y);
+            if (dist <= 130) {
+              effectiveSpeed *= 0.5;
+              this.isSlowed = true;
+              this.takeDamage(2.9 * deltaTime, other);
+            }
+          }
+        });
+
+        scorchTrails.forEach(trail => {
+          if (trail.owner !== this) {
+            const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
+            if (dist < trail.radius) {
+              this.takeDamage(3 * deltaTime, trail.owner);
+            }
+          }
+        });
+
+        if (this.type === "scorch") {
+          scorchTrails.push({
+            x: this.x,
+            y: this.y,
+            radius: 15,
+            timer: 1.5,
+            owner: this
+          });
+        }
+
+        if (this.barrierTimer > 0) {
+          this.barrierTimer -= deltaTime;
+          if (this.barrierTimer <= 0) {
+            this.barrierHp = 0;
+          }
+        }
+
+        for (let i = this.dots.length - 1; i >= 0; i--) {
+          const dot = this.dots[i];
+          dot.duration -= deltaTime;
+          this.takeDamage(dot.dps * deltaTime, dot.attacker);
+
+          if (dot.type === "leech" && dot.attacker && dot.attacker.hp > 0) {
+            dot.attacker.hp = Math.min(dot.attacker.maxHp, dot.attacker.hp + (dot.dps * 0.6) * deltaTime);
+          }
+
+          if (dot.duration <= 0) this.dots.splice(i, 1);
+        }
+
+        if (this.curseStacks > 0) {
+          this.takeDamage(this.curseStacks * 1.8 * deltaTime, null);
+        }
+
+        const currentVx = (this.vx / this.baseSpeed) * effectiveSpeed * speedMultiplier;
+        const currentVy = (this.vy / this.baseSpeed) * effectiveSpeed * speedMultiplier;
+        this.x += currentVx;
+        this.y += currentVy;
+
+        const dx = this.x - centerX;
+        const dy = this.y - centerY;
+        const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+
+        if (distanceToCenter + this.radius > arenaRadius) {
+          const nx = dx / distanceToCenter;
+          const ny = dy / distanceToCenter;
+          const dot = this.vx * nx + this.vy * ny;
+
+          this.vx -= 2 * dot * nx;
+          this.vy -= 2 * dot * ny;
+
+          this.x = centerX + nx * (arenaRadius - this.radius);
+          this.y = centerY + ny * (arenaRadius - this.radius);
+        }
+
+        if (this.attackCooldown > 0) {
+          this.attackCooldown -= deltaTime;
+        } else {
+          const target = this.findNearestEnemy();
+          if (target) {
+            this.attackEnemy(target);
+            this.attackCooldown = this.attackSpeed;
+          }
+        }
+      }
+
+      findNearestEnemy() {
+        let nearest = null;
+        let minDist = Infinity;
+
+        activePokemons.forEach(enemy => {
+          if (enemy !== this && enemy.hp > 0) {
+            const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+            if (dist <= this.attackRange && dist < minDist) {
+              minDist = dist;
+              nearest = enemy;
+            }
+          }
+        });
+
+        return nearest;
+      }
+
+      attackEnemy(target) {
+        const baseDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
+
+        if (this.type === "aoe_slam") {
+          visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: 180, timer: 0.25 });
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && p !== this) {
+              if (Math.hypot(p.x - this.x, p.y - this.y) <= 90) {
+                p.takeDamage(baseDmg * 1.8, this);
+              }
+            }
+          });
+        } else if (this.type === "snipe_shot") {
+          visualEffects.push({ type: "cross_laser", x: this.x, y: this.y, timer: 0.25 });
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && p !== this) {
+              if (Math.abs(p.x - this.x) <= 30 || Math.abs(p.y - this.y) <= 30) {
+                p.takeDamage(baseDmg * 1.1, this);
+              }
+            }
+          });
+        } else {
+          if (this.type === "barrier") {
+            this.barrierTimer = 1.3;
+            this.barrierHp = this.maxBarrierHp;
+          }
+          projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, baseDmg, this.type, this));
+        }
+      }
+
+      takeDamage(amount, attacker = null) {
+        if (amount <= 0 || this.hp <= 0) return;
+
+        let finalAmount = amount;
+
+        if (this.barrierHp > 0) {
+          if (attacker && attacker !== this) {
+            attacker.takeDamage(finalAmount * 2.0, null);
+          }
+
+          if (this.barrierHp >= finalAmount) {
+            this.barrierHp -= finalAmount;
+            finalAmount = 0;
+          } else {
+            finalAmount -= this.barrierHp;
+            this.barrierHp = 0;
+          }
+        }
+
+        this.hp -= finalAmount;
+
+        if (attacker && amount > 0) {
+          attacker.totalDamageDealt += amount;
+        }
+
+        if (this.hp <= 0) {
+          this.hp = 0;
+          eliminationOrder.push(this);
+        }
+      }
+
+      draw() {
+        if (this.hp <= 0) return;
+
+        if (this.type === "slow_feld") {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 130, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(72, 219, 251, 0.12)";
+          ctx.fill();
+        }
+
+        if (this.barrierHp > 0) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
+          ctx.strokeStyle = "#ff9ff3";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        if (this.imageLoaded) {
+          ctx.drawImage(this.image, this.x - 22, this.y - 22, 44, 44);
+        } else {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+
+        if (this.curseStacks > 0) {
+          ctx.fillStyle = "#a29bfe";
+          ctx.font = "bold 11px Arial";
+          ctx.fillText("💀" + this.curseStacks, this.x + 18, this.y - 5);
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
+
+        const barWidth = 36;
+        const barHeight = 5;
+        const hpPercent = this.hp / this.maxHp;
+
+        ctx.fillStyle = "#cc0000";
+        ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
+
+        ctx.fillStyle = "#00ff66";
+        ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth * hpPercent, barHeight);
+
+        if (this.barrierHp > 0) {
+          const barrierPercent = this.barrierHp / this.maxBarrierHp;
+          ctx.fillStyle = "#ff9ff3";
+          ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 8, barWidth * barrierPercent, 3);
+        }
+
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
+
+        // Status-Icons
+        let statusIcons = "";
+        const hasBurn = this.dots.some(d => d.type === "burn");
+        const hasLeech = this.dots.some(d => d.type === "leech");
+
+        if (hasBurn) statusIcons += "🔥";
+        if (this.isSlowed) statusIcons += "❄️";
+        if (hasLeech) statusIcons += "🌱";
+
+        if (statusIcons !== "") {
+          ctx.font = "12px Arial";
+          ctx.textAlign = "left";
+          ctx.fillText(statusIcons, this.x + barWidth / 2 + 3, this.y - this.radius);
+        }
+      }
+    }
+
+    class Projectile {
+      constructor(x, y, target, color, damage, specialType, shooter) {
+        this.x = x;
+        this.y = y;
+        this.target = target;
+        this.color = color;
+        this.damage = damage;
+        this.specialType = specialType;
+        this.shooter = shooter;
+        this.baseSpeed = 5.0;
+        this.radius = 4;
+        this.hit = false;
+        this.targetX = target.x;
+        this.targetY = target.y;
+      }
+
+      update() {
+        if (!this.target) {
+          this.hit = true;
+          return;
+        }
+
+        const tx = (this.target && this.target.hp > 0) ? this.target.x : this.targetX;
+        const ty = (this.target && this.target.hp > 0) ? this.target.y : this.targetY;
+
+        const dx = tx - this.x;
+        const dy = ty - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        const currentSpeed = this.baseSpeed * speedMultiplier;
+
+        if (dist < currentSpeed) {
+          this.applyImpact();
+          this.hit = true;
+        } else {
+          this.x += (dx / dist) * currentSpeed;
+          this.y += (dy / dist) * currentSpeed;
+        }
+      }
+
+      applyImpact() {
+        if (this.target && this.target.hp > 0) {
+          let finalDmg = this.damage;
+
+          if (this.specialType === "crit" && Math.random() < 0.30) {
+            finalDmg *= 2.2;
+            visualEffects.push({ type: "crit_text", x: this.target.x, y: this.target.y - 15, timer: 0.5, text: "CRIT!" });
+          }
+
+          this.target.takeDamage(finalDmg, this.shooter);
+
+          if (this.specialType === "burn") this.target.applyDoT("burn", 6, 5, this.shooter);
+          if (this.specialType === "curse_dot") this.target.applyDoT("curse", 0, 0, this.shooter);
+          if (this.specialType === "leech_seed") this.target.applyDoT("leech", 5, 4, this.shooter);
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    function updateLeaderboard() {
+      const lbContainer = document.getElementById("leaderboardList");
+      const sorted = [...activePokemons].sort((a, b) => b.totalDamageDealt - a.totalDamageDealt);
+
+      lbContainer.innerHTML = "";
+      sorted.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "lb-item" + (p.hp <= 0 ? " dead" : "");
+        item.innerHTML = `
+          <span class="lb-name">
+            <span style="display:inline-block; width:8px; height:8px; background:${p.typeColor}; border-radius:50%; flex-shrink:0;"></span>
+            ${p.name}
+          </span>
+          <span class="lb-dmg">${Math.floor(p.totalDamageDealt)}</span>
+        `;
+        lbContainer.appendChild(item);
+      });
+    }
+
+    function updatePlacementList() {
+      const placementContainer = document.getElementById("placementList");
+      const total = activePokemons.length;
+      
+      const alive = activePokemons.filter(p => p.hp > 0);
+      const list = [];
+      
+      alive.forEach(p => {
+        list.push({ pokemon: p, isAlive: true });
+      });
+
+      for (let i = eliminationOrder.length - 1; i >= 0; i--) {
+        list.push({ pokemon: eliminationOrder[i], isAlive: false, rank: total - i });
+      }
+
+      placementContainer.innerHTML = "";
+      list.forEach((item) => {
+        const rankText = item.isAlive ? (alive.length === 1 && eliminationOrder.length === total - 1 ? "#1" : "●") : `#${item.rank}`;
+        const div = document.createElement("div");
+        div.className = "place-item " + (item.isAlive ? "alive" : "dead");
+        div.innerHTML = `
+          <div class="place-info">
+            <span class="place-rank">${rankText}</span>
+            <span style="display:inline-block; width:8px; height:8px; background:${item.pokemon.typeColor}; border-radius:50%; flex-shrink:0;"></span>
+            <span style="font-weight: bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.pokemon.name}</span>
+          </div>
+          <span style="font-size:11px; color:#aaa; margin-left:4px;">${item.isAlive ? Math.ceil(item.pokemon.hp) + "HP" : "K.O."}</span>
+        `;
+        placementContainer.appendChild(div);
+      });
+    }
+
+    function startSelectedMatch() {
+      const selectedIndices = Array.from(document.querySelectorAll("#pokemonSelectionList input:checked"))
+                                   .map(cb => parseInt(cb.value));
+
+      if (selectedIndices.length < 2) {
+        alert("Bitte wähle mindestens 2 Pokémon für den Kampf aus!");
+        return;
+      }
+
+      activePokemons = [];
+      projectiles = [];
+      visualEffects = [];
+      scorchTrails = [];
+      eliminationOrder = [];
+      gameOver = false;
+      matchStarted = true;
+      document.getElementById("winnerAnnounce").innerText = "Der Kampf läuft...";
+
+      selectedIndices.forEach((idx, id) => {
+        activePokemons.push(new Pokemon(pokemonTemplates[idx], id));
+      });
+
+      document.getElementById("setupMenu").style.display = "none";
+      document.getElementById("toggleMenuBtn").innerText = "⚙️ Menü einblenden / Auswählen";
+      updateLeaderboard();
+      updatePlacementList();
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const deltaTime = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "#22222b";
+      ctx.fill();
+
+      if (matchStarted) {
+        for (let i = scorchTrails.length - 1; i >= 0; i--) {
+          const trail = scorchTrails[i];
+          trail.timer -= deltaTime;
+          ctx.beginPath();
+          ctx.arc(trail.x, trail.y, trail.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 127, 80, ${trail.timer / 2.0 * 0.4})`;
+          ctx.fill();
+
+          if (trail.timer <= 0) scorchTrails.splice(i, 1);
+        }
+
+        const alivePokemons = activePokemons.filter(p => p.hp > 0);
+
+        if (alivePokemons.length <= 1 && !gameOver) {
+          gameOver = true;
+          const winnerAnnounce = document.getElementById("winnerAnnounce");
+          if (alivePokemons.length === 1) {
+            winnerAnnounce.innerText = "🏆 " + alivePokemons[0].name + " hat gewonnen!";
+          } else {
+            winnerAnnounce.innerText = "Unentschieden!";
+          }
+          document.getElementById("setupMenu").style.display = "block";
+          document.getElementById("toggleMenuBtn").innerText = "⚙️ Menü ausblenden";
+        }
+
+        activePokemons.forEach(pokemon => {
+          pokemon.update(deltaTime);
+          pokemon.draw();
+        });
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+          const proj = projectiles[i];
+          proj.update();
+          proj.draw();
+          if (proj.hit) projectiles.splice(i, 1);
+        }
+
+        for (let i = visualEffects.length - 1; i >= 0; i--) {
+          const fx = visualEffects[i];
+          fx.timer -= deltaTime;
+
+          if (fx.type === "circle_aoe") {
+            ctx.beginPath();
+            ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(116, 125, 140, 0.35)";
+            ctx.fill();
+          } else if (fx.type === "cross_laser") {
+            ctx.strokeStyle = "rgba(9, 132, 227, 0.8)";
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(fx.x, 0); ctx.lineTo(fx.x, canvas.height);
+            ctx.moveTo(0, fx.y); ctx.lineTo(canvas.width, fx.y);
+            ctx.stroke();
+          } else if (fx.type === "crit_text") {
+            ctx.fillStyle = "#ff4d4d";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(fx.text || "CRIT!", fx.x, fx.y);
+          }
+
+          if (fx.timer <= 0) visualEffects.splice(i, 1);
+        }
+
+        updateLeaderboard();
+        updatePlacementList();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    buildSelectionMenu();
+    requestAnimationFrame(gameLoop);
+  </script>
+
+</body>
+</html>
