@@ -197,7 +197,6 @@
       margin-left: 5px;
     }
 
-    /* Zweispaltige Platzierungs-Liste */
     .place-item {
       display: flex;
       justify-content: space-between;
@@ -260,7 +259,6 @@
   </div>
 
   <div class="main-container">
-    <!-- Links: Platzierungs-Ranking (Zweispaltig) -->
     <div id="placementPanel" class="side-panel">
       <h3>🏆 Platzierung</h3>
       <div id="placementList"></div>
@@ -268,7 +266,6 @@
 
     <canvas id="arenaCanvas" width="750" height="750"></canvas>
 
-    <!-- Rechts: Schadens-Rangliste (Zweispaltig) -->
     <div id="leaderboard" class="side-panel">
       <h3>📊 Schadens-Rangliste</h3>
       <div id="leaderboardList"></div>
@@ -281,9 +278,14 @@
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const arenaRadius = canvas.width / 2 - 12;
+    const initialArenaRadius = canvas.width / 2 - 12;
+    let arenaRadius = initialArenaRadius;
 
     let speedMultiplier = 1.0;
+
+    // Timer & Verkleinerungs-Variablen
+    let battleTime = 0;
+    let shrinkIntervalCount = 0;
 
     const typeColors = {
       burn: "#ff4757",        
@@ -298,23 +300,22 @@
       leech_seed: "#2ed573"   
     };
 
-    // Alle Pokémon haben 300 HP und 0.5 Speed
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
       { name: "Rotom",          color: "#f39c12", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 140, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
-      { name: "Impi",  		color: "#0984e3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Impi",           color: "#0984e3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
       { name: "Nachtara",       color: "#6c5ce7", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
       { name: "Gengar",         color: "#a29bfe", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
-      { name: "Relaxo",         color: "#636e72", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+      { name: "Relaxo",         color: "#636e72", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
-      { name: "Stolloss",       color: "#a4b0be", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+      { name: "Stolloss",       color: "#a4b0be", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
       { name: "Pelipper",       color: "#70a1ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
       { name: "Rabigator",      color: "#ff6348", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
       { name: "Zytomega",       color: "#1dd1a1", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/579.png" },
-      { name: "Fermicula",      color: "#57606f", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140,  type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/632.png" },
+      { name: "Fermicula",      color: "#57606f", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/632.png" },
       { name: "Brigaron",       color: "#10ac84", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/652.png" },
       { name: "Fiaro",          color: "#ff4757", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png" },
       { name: "Elezard",        color: "#eccc68", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/695.png" },
@@ -328,15 +329,16 @@
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 260, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
       { name: "Arceus",         color: "#c8d6e5", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
       { name: "Pamomamo",       color: "#feca57", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
-      { name: "Saltigant",      color: "#ee5253", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100,  type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
       { name: "Eisenbündel",    color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
-      { name: "Bisasam",    	color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
+      { name: "Bisasam",        color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
     ];
 
     let activePokemons = [];
     let projectiles = [];
     let visualEffects = [];
     let scorchTrails = [];
+    let leechSeeds = [];
     let matchStarted = false;
     let gameOver = false;
     let lastTime = 0;
@@ -396,22 +398,28 @@
 
         this.dots = [];
         this.curseStacks = 0;
-        this.barrierTimer = 0;
-        this.barrierHp = 0;
-        this.maxBarrierHp = Math.floor(template.maxHp * 0.05);
+
+        // Barrier Rework Props
+        this.barrierInvulnerableTimer = 0;
+        this.barrierSkillCooldown = 0;
+
+        // AoE Slam Auto-Trigger Cooldown
+        this.slamCooldown = 0;
+
+        // Leech Seed Auto-Drop Cooldown
+        this.seedDropCooldown = 0;
 
         this.imageLoaded = false;
         this.image = new Image();
         this.image.src = template.img;
         this.image.onload = () => { this.imageLoaded = true; };
 
-        // Zufälliger Spawn in der Arena
+        // Spawn-Position
         const angle = Math.random() * Math.PI * 2;
         const r = Math.sqrt(Math.random()) * (arenaRadius - 40);
         this.x = centerX + r * Math.cos(angle);
         this.y = centerY + r * Math.sin(angle);
 
-        // Zufällige Bewegungsrichtung
         const moveAngle = Math.random() * Math.PI * 2;
         this.vx = Math.cos(moveAngle) * this.baseSpeed;
         this.vy = Math.sin(moveAngle) * this.baseSpeed;
@@ -431,6 +439,47 @@
         let effectiveSpeed = this.baseSpeed;
         this.isSlowed = false;
 
+        // Barrier Unverwundbarkeits-Timer update
+        if (this.barrierInvulnerableTimer > 0) {
+          this.barrierInvulnerableTimer -= deltaTime;
+        }
+
+        // Barrier Skill Cooldown update
+        if (this.type === "barrier") {
+          if (this.barrierSkillCooldown > 0) {
+            this.barrierSkillCooldown -= deltaTime;
+          } else {
+            this.barrierInvulnerableTimer = 2.0;
+            this.barrierSkillCooldown = 7.0 / this.attackSpeed;
+          }
+        }
+
+        // AoE Slam Auto-Trigger
+        if (this.type === "aoe_slam") {
+          if (this.slamCooldown > 0) {
+            this.slamCooldown -= deltaTime;
+          } else {
+            this.triggerAoeSlam();
+            this.slamCooldown = 2.5 / this.attackSpeed;
+          }
+        }
+
+        // Leech Seed Auto-Drop
+        if (this.type === "leech_seed") {
+          if (this.seedDropCooldown > 0) {
+            this.seedDropCooldown -= deltaTime;
+          } else {
+            leechSeeds.push({
+              x: this.x,
+              y: this.y,
+              radius: 12,
+              owner: this
+            });
+            this.seedDropCooldown = 4.0 / this.attackSpeed;
+          }
+        }
+
+        // Slow Feld Effect
         activePokemons.forEach(other => {
           if (other.type === "slow_feld" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
@@ -442,6 +491,7 @@
           }
         });
 
+        // Scorch Trail Damage (Reworked Buff)
         scorchTrails.forEach(trail => {
           if (trail.owner !== this) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
@@ -455,19 +505,13 @@
           scorchTrails.push({
             x: this.x,
             y: this.y,
-            radius: 15,
-            timer: 1.5,
+            radius: 22, // Vergrößerter Radius
+            timer: 2.0, // Trail Duration 2.0s
             owner: this
           });
         }
 
-        if (this.barrierTimer > 0) {
-          this.barrierTimer -= deltaTime;
-          if (this.barrierTimer <= 0) {
-            this.barrierHp = 0;
-          }
-        }
-
+        // DoT Handling
         for (let i = this.dots.length - 1; i >= 0; i--) {
           const dot = this.dots[i];
           dot.duration -= deltaTime;
@@ -484,11 +528,13 @@
           this.takeDamage(this.curseStacks * 1.8 * deltaTime, null);
         }
 
+        // Bewegung
         const currentVx = (this.vx / this.baseSpeed) * effectiveSpeed * speedMultiplier;
         const currentVy = (this.vy / this.baseSpeed) * effectiveSpeed * speedMultiplier;
         this.x += currentVx;
         this.y += currentVy;
 
+        // Arenarand Kolllision
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
@@ -505,6 +551,7 @@
           this.y = centerY + ny * (arenaRadius - this.radius);
         }
 
+        // Normale Angriffe
         if (this.attackCooldown > 0) {
           this.attackCooldown -= deltaTime;
         } else {
@@ -533,32 +580,48 @@
         return nearest;
       }
 
-      attackEnemy(target) {
-        const baseDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
+      triggerAoeSlam() {
+        const slamRadius = 140; // Vergrößerter Radius
+        const baseDmg = Math.max(3, this.attack);
+        visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.35 });
 
-        if (this.type === "aoe_slam") {
-          visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: 180, timer: 0.25 });
-          activePokemons.forEach(p => {
-            if (p.hp > 0 && p !== this) {
-              if (Math.hypot(p.x - this.x, p.y - this.y) <= 90) {
-                p.takeDamage(baseDmg * 1.8, this);
-              }
+        activePokemons.forEach(p => {
+          if (p.hp > 0 && p !== this) {
+            if (Math.hypot(p.x - this.x, p.y - this.y) <= slamRadius) {
+              p.takeDamage(baseDmg * 1.8, this);
             }
-          });
-        } else if (this.type === "snipe_shot") {
-          visualEffects.push({ type: "cross_laser", x: this.x, y: this.y, timer: 0.25 });
-          activePokemons.forEach(p => {
-            if (p.hp > 0 && p !== this) {
-              if (Math.abs(p.x - this.x) <= 30 || Math.abs(p.y - this.y) <= 30) {
-                p.takeDamage(baseDmg * 1.1, this);
-              }
-            }
-          });
-        } else {
-          if (this.type === "barrier") {
-            this.barrierTimer = 1.3;
-            this.barrierHp = this.maxBarrierHp;
           }
+        });
+      }
+
+      attackEnemy(target) {
+        let baseDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
+
+        if (this.type === "barrier") {
+          baseDmg *= 1.25; // 1.25-facher Schaden
+        }
+
+        if (this.type === "snipe_shot") {
+          // Durchschlagender Laser bis zum Arenarand
+          const dx = target.x - this.x;
+          const dy = target.y - this.y;
+          const angle = Math.atan2(dy, dx);
+          
+          const endX = this.x + Math.cos(angle) * arenaRadius * 2;
+          const endY = this.y + Math.sin(angle) * arenaRadius * 2;
+
+          visualEffects.push({ type: "piercing_laser", x1: this.x, y1: this.y, x2: endX, y2: endY, timer: 0.25 });
+
+          // Schaden an allen Pokémon in der Laserbahn
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && p !== this) {
+              const distToLine = distanceToSegment({ x: p.x, y: p.y }, { x: this.x, y: this.y }, { x: endX, y: endY });
+              if (distToLine <= p.radius + 8) {
+                p.takeDamage(baseDmg * 1.2, this);
+              }
+            }
+          });
+        } else if (this.type !== "aoe_slam") { // AoE Slam greift nicht per Projectile an
           projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, baseDmg, this.type, this));
         }
       }
@@ -566,23 +629,10 @@
       takeDamage(amount, attacker = null) {
         if (amount <= 0 || this.hp <= 0) return;
 
-        let finalAmount = amount;
+        // Unverwundbarkeit durch Barrier Skill
+        if (this.barrierInvulnerableTimer > 0) return;
 
-        if (this.barrierHp > 0) {
-          if (attacker && attacker !== this) {
-            attacker.takeDamage(finalAmount * 2.0, null);
-          }
-
-          if (this.barrierHp >= finalAmount) {
-            this.barrierHp -= finalAmount;
-            finalAmount = 0;
-          } else {
-            finalAmount -= this.barrierHp;
-            this.barrierHp = 0;
-          }
-        }
-
-        this.hp -= finalAmount;
+        this.hp -= amount;
 
         if (attacker && amount > 0) {
           attacker.totalDamageDealt += amount;
@@ -604,11 +654,12 @@
           ctx.fill();
         }
 
-        if (this.barrierHp > 0) {
+        // Barrier Schild-Effekt bei Unverwundbarkeit
+        if (this.barrierInvulnerableTimer > 0) {
           ctx.beginPath();
-          ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
+          ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
           ctx.strokeStyle = "#ff9ff3";
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 4;
           ctx.stroke();
         }
 
@@ -642,17 +693,10 @@
         ctx.fillStyle = "#00ff66";
         ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth * hpPercent, barHeight);
 
-        if (this.barrierHp > 0) {
-          const barrierPercent = this.barrierHp / this.maxBarrierHp;
-          ctx.fillStyle = "#ff9ff3";
-          ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 8, barWidth * barrierPercent, 3);
-        }
-
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
-        // Status-Icons
         let statusIcons = "";
         const hasBurn = this.dots.some(d => d.type === "burn");
         const hasLeech = this.dots.some(d => d.type === "leech");
@@ -660,6 +704,7 @@
         if (hasBurn) statusIcons += "🔥";
         if (this.isSlowed) statusIcons += "❄️";
         if (hasLeech) statusIcons += "🌱";
+        if (this.barrierInvulnerableTimer > 0) statusIcons += "🛡️";
 
         if (statusIcons !== "") {
           ctx.font = "12px Arial";
@@ -667,6 +712,15 @@
           ctx.fillText(statusIcons, this.x + barWidth / 2 + 3, this.y - this.radius);
         }
       }
+    }
+
+    // Hilfsfunktion für Distanz zu Laserlinie
+    function distanceToSegment(p, v, w) {
+      const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
     }
 
     class Projectile {
@@ -722,7 +776,6 @@
 
           if (this.specialType === "burn") this.target.applyDoT("burn", 6, 5, this.shooter);
           if (this.specialType === "curse_dot") this.target.applyDoT("curse", 0, 0, this.shooter);
-          if (this.specialType === "leech_seed") this.target.applyDoT("leech", 5, 4, this.shooter);
         }
       }
 
@@ -794,10 +847,15 @@
         return;
       }
 
+      arenaRadius = initialArenaRadius;
+      battleTime = 0;
+      shrinkIntervalCount = 0;
+
       activePokemons = [];
       projectiles = [];
       visualEffects = [];
       scorchTrails = [];
+      leechSeeds = [];
       eliminationOrder = [];
       gameOver = false;
       matchStarted = true;
@@ -815,17 +873,33 @@
 
     function gameLoop(timestamp) {
       if (!lastTime) lastTime = timestamp;
-      const deltaTime = (timestamp - lastTime) / 1000;
+      const deltaTime = ((timestamp - lastTime) / 1000) * speedMultiplier;
       lastTime = timestamp;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      if (matchStarted && !gameOver) {
+        battleTime += deltaTime;
+
+        // Dynamische Arenaverkleinerung alle 45s um 10%
+        const intervalsPassed = Math.floor(battleTime / 45);
+        if (intervalsPassed > shrinkIntervalCount) {
+          shrinkIntervalCount = intervalsPassed;
+          arenaRadius *= 0.90;
+        }
+      }
+
+      // Arena Zeichnen
       ctx.beginPath();
       ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
       ctx.fillStyle = "#22222b";
       ctx.fill();
+      ctx.strokeStyle = "#ffcb05";
+      ctx.lineWidth = 4;
+      ctx.stroke();
 
       if (matchStarted) {
+        // Scorch Trails Update/Draw
         for (let i = scorchTrails.length - 1; i >= 0; i--) {
           const trail = scorchTrails[i];
           trail.timer -= deltaTime;
@@ -835,6 +909,38 @@
           ctx.fill();
 
           if (trail.timer <= 0) scorchTrails.splice(i, 1);
+        }
+
+        // Leech Seed Überprüfung & Rendering
+        for (let i = leechSeeds.length - 1; i >= 0; i--) {
+          const seed = leechSeeds[i];
+
+          // Samen zeichnen
+          ctx.beginPath();
+          ctx.arc(seed.x, seed.y, seed.radius, 0, Math.PI * 2);
+          ctx.fillStyle = "#2ed573";
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Kollision mit Pokémon testen
+          let seedHit = false;
+          for (let p of activePokemons) {
+            if (p.hp > 0 && Math.hypot(p.x - seed.x, p.y - seed.y) <= p.radius + seed.radius) {
+              if (p.type === "leech_seed") {
+                p.hp = Math.min(p.maxHp, p.hp + 20); // Heilung um 20 HP
+              } else {
+                p.takeDamage(20, seed.owner); // Schaden erleiden
+              }
+              seedHit = true;
+              break;
+            }
+          }
+
+          if (seedHit) {
+            leechSeeds.splice(i, 1);
+          }
         }
 
         const alivePokemons = activePokemons.filter(p => p.hp > 0);
@@ -872,12 +978,12 @@
             ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(116, 125, 140, 0.35)";
             ctx.fill();
-          } else if (fx.type === "cross_laser") {
+          } else if (fx.type === "piercing_laser") {
             ctx.strokeStyle = "rgba(9, 132, 227, 0.8)";
-            ctx.lineWidth = 8;
+            ctx.lineWidth = 10;
             ctx.beginPath();
-            ctx.moveTo(fx.x, 0); ctx.lineTo(fx.x, canvas.height);
-            ctx.moveTo(0, fx.y); ctx.lineTo(canvas.width, fx.y);
+            ctx.moveTo(fx.x1, fx.y1);
+            ctx.lineTo(fx.x2, fx.y2);
             ctx.stroke();
           } else if (fx.type === "crit_text") {
             ctx.fillStyle = "#ff4d4d";
@@ -888,6 +994,14 @@
 
           if (fx.timer <= 0) visualEffects.splice(i, 1);
         }
+
+        // Timer-Anzeige in der Arena (oben rechts)
+        const mins = Math.floor(battleTime / 60).toString().padStart(2, '0');
+        const secs = Math.floor(battleTime % 60).toString().padStart(2, '0');
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(`⏱️ ${mins}:${secs}`, canvas.width - 20, 30);
 
         updateLeaderboard();
         updatePlacementList();
