@@ -399,9 +399,9 @@
         this.dots = [];
         this.curseStacks = 0;
 
-        // Barrier Rework Props
-        this.barrierInvulnerableTimer = 0;
-        this.barrierSkillCooldown = 0;
+        // Barrier Orb Rotation Angle
+        this.orbAngle = Math.random() * Math.PI * 2;
+        this.orbHitCooldowns = new Map(); // Cooldown pro getroffenen Gegner
 
         // AoE Slam Auto-Trigger Cooldown
         this.slamCooldown = 0;
@@ -439,19 +439,50 @@
         let effectiveSpeed = this.baseSpeed;
         this.isSlowed = false;
 
-        // Barrier Unverwundbarkeits-Timer update
-        if (this.barrierInvulnerableTimer > 0) {
-          this.barrierInvulnerableTimer -= deltaTime;
-        }
-
-        // Barrier Skill Cooldown update
+        // Barrier Rework: Schwirrende Orbs im Uhrzeigersinn
         if (this.type === "barrier") {
-          if (this.barrierSkillCooldown > 0) {
-            this.barrierSkillCooldown -= deltaTime;
-          } else {
-            this.barrierInvulnerableTimer = 2.0;
-            this.barrierSkillCooldown = 7.0 / this.attackSpeed;
-          }
+          this.orbAngle += 4.5 * deltaTime; // Rotationsgeschwindigkeit im Uhrzeigersinn
+          const orbDist = this.radius + 15; // Distanz eng um das Pokémon
+          const orbRadius = 6;
+
+          // Zwei Orbs gegenüberliegend (Angle und Angle + PI)
+          const orbPositions = [
+            { x: this.x + Math.cos(this.orbAngle) * orbDist, y: this.y + Math.sin(this.orbAngle) * orbDist },
+            { x: this.x + Math.cos(this.orbAngle + Math.PI) * orbDist, y: this.y + Math.sin(this.orbAngle + Math.PI) * orbDist }
+          ];
+
+          // Cooldowns reduzieren
+          this.orbHitCooldowns.forEach((cd, key) => {
+            if (cd > 0) this.orbHitCooldowns.set(key, cd - deltaTime);
+          });
+
+          // Kollision der Orbs mit gegnerischen Pokémon testen
+          activePokemons.forEach(other => {
+            if (other !== this && other.hp > 0) {
+              for (let orb of orbPositions) {
+                if (Math.hypot(other.x - orb.x, other.y - orb.y) <= other.radius + orbRadius) {
+                  const currentCd = this.orbHitCooldowns.get(other.id) || 0;
+                  if (currentCd <= 0) {
+                    // Schaden & Rückwurf (Knockback)
+                    const baseDmg = Math.max(3, this.attack * 0.7);
+                    other.takeDamage(baseDmg, this);
+
+                    // Rückwurf berechnen
+                    let kx = other.x - this.x;
+                    let ky = other.y - this.y;
+                    let kDist = Math.hypot(kx, ky) || 1;
+                    const knockbackDist = 35;
+
+                    other.x += (kx / kDist) * knockbackDist;
+                    other.y += (ky / kDist) * knockbackDist;
+
+                    // Treffer-Cooldown (z.B. 0.5s) damit der Rückwurf nicht dauerspammt
+                    this.orbHitCooldowns.set(other.id, 0.5);
+                  }
+                }
+              }
+            }
+          });
         }
 
         // AoE Slam Auto-Trigger
@@ -464,15 +495,20 @@
           }
         }
 
-        // Leech Seed Auto-Drop
+        // Leech Seed Auto-Drop (Hinter dem Pokémon ablegen!)
         if (this.type === "leech_seed") {
           if (this.seedDropCooldown > 0) {
             this.seedDropCooldown -= deltaTime;
           } else {
+            let vLen = Math.hypot(this.vx, this.vy) || 1;
+            // Platziere den Samen etwas HINTER dem Pokémon entgegen seiner Bewegungsrichtung
+            const dropX = this.x - (this.vx / vLen) * (this.radius + 18);
+            const dropY = this.y - (this.vy / vLen) * (this.radius + 18);
+
             leechSeeds.push({
-              x: this.x,
-              y: this.y,
-              radius: 12,
+              x: dropX,
+              y: dropY,
+              radius: 10,
               owner: this
             });
             this.seedDropCooldown = 4.0 / this.attackSpeed;
@@ -491,7 +527,7 @@
           }
         });
 
-        // Scorch Trail Damage (Reworked Buff)
+        // Scorch Trail Damage
         scorchTrails.forEach(trail => {
           if (trail.owner !== this) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
@@ -505,8 +541,8 @@
           scorchTrails.push({
             x: this.x,
             y: this.y,
-            radius: 22, // Vergrößerter Radius
-            timer: 2.0, // Trail Duration 2.0s
+            radius: 22,
+            timer: 2.0,
             owner: this
           });
         }
@@ -534,7 +570,7 @@
         this.x += currentVx;
         this.y += currentVy;
 
-        // Arenarand Kolllision
+        // Arenarand Kollision
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
@@ -581,7 +617,7 @@
       }
 
       triggerAoeSlam() {
-        const slamRadius = 140; // Vergrößerter Radius
+        const slamRadius = 140;
         const baseDmg = Math.max(3, this.attack);
         visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.35 });
 
@@ -597,12 +633,7 @@
       attackEnemy(target) {
         let baseDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
 
-        if (this.type === "barrier") {
-          baseDmg *= 1.25; // 1.25-facher Schaden
-        }
-
         if (this.type === "snipe_shot") {
-          // Durchschlagender Laser bis zum Arenarand
           const dx = target.x - this.x;
           const dy = target.y - this.y;
           const angle = Math.atan2(dy, dx);
@@ -612,7 +643,6 @@
 
           visualEffects.push({ type: "piercing_laser", x1: this.x, y1: this.y, x2: endX, y2: endY, timer: 0.25 });
 
-          // Schaden an allen Pokémon in der Laserbahn
           activePokemons.forEach(p => {
             if (p.hp > 0 && p !== this) {
               const distToLine = distanceToSegment({ x: p.x, y: p.y }, { x: this.x, y: this.y }, { x: endX, y: endY });
@@ -621,16 +651,13 @@
               }
             }
           });
-        } else if (this.type !== "aoe_slam") { // AoE Slam greift nicht per Projectile an
+        } else if (this.type !== "aoe_slam") {
           projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, baseDmg, this.type, this));
         }
       }
 
       takeDamage(amount, attacker = null) {
         if (amount <= 0 || this.hp <= 0) return;
-
-        // Unverwundbarkeit durch Barrier Skill
-        if (this.barrierInvulnerableTimer > 0) return;
 
         this.hp -= amount;
 
@@ -654,13 +681,23 @@
           ctx.fill();
         }
 
-        // Barrier Schild-Effekt bei Unverwundbarkeit
-        if (this.barrierInvulnerableTimer > 0) {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
-          ctx.strokeStyle = "#ff9ff3";
-          ctx.lineWidth = 4;
-          ctx.stroke();
+        // Barrier Orbs Zeichnen
+        if (this.type === "barrier") {
+          const orbDist = this.radius + 15;
+          const orbRadius = 6;
+          for (let i = 0; i < 2; i++) {
+            const angleOffset = i * Math.PI;
+            const ox = this.x + Math.cos(this.orbAngle + angleOffset) * orbDist;
+            const oy = this.y + Math.sin(this.orbAngle + angleOffset) * orbDist;
+
+            ctx.beginPath();
+            ctx.arc(ox, oy, orbRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ff9ff3";
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
         }
 
         if (this.imageLoaded) {
@@ -704,7 +741,6 @@
         if (hasBurn) statusIcons += "🔥";
         if (this.isSlowed) statusIcons += "❄️";
         if (hasLeech) statusIcons += "🌱";
-        if (this.barrierInvulnerableTimer > 0) statusIcons += "🛡️";
 
         if (statusIcons !== "") {
           ctx.font = "12px Arial";
@@ -714,7 +750,6 @@
       }
     }
 
-    // Hilfsfunktion für Distanz zu Laserlinie
     function distanceToSegment(p, v, w) {
       const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
       if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
