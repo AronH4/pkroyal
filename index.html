@@ -281,6 +281,14 @@
     const initialArenaRadius = canvas.width / 2 - 12;
     let arenaRadius = initialArenaRadius;
 
+    // Wellen-Parameter für die Wand
+    let waveAmplitude = 8;
+    let waveFrequency = 6;
+    let wavePhase = 0;
+
+    // Bumper-Eigenschaften
+    let activeBumper = null; // { angle, x, y, radius }
+
     let speedMultiplier = 1.0;
 
     let battleTime = 0;
@@ -308,9 +316,9 @@
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 180, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
       { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
-      { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+      { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 20, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
-      { name: "Stolloss",       color: "#a4b0be", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+      { name: "Stolloss",       color: "#a4b0be", maxHp: 400, attack: 20, defense: 20, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
       { name: "Pelipper",       color: "#70a1ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 200, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
       { name: "Rabigator",      color: "#ff6348", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
       { name: "Zytomega",       color: "#1dd1a1", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/579.png" },
@@ -322,13 +330,13 @@
       { name: "Silvarro",       color: "#009432", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 200, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
       { name: "Curelei",        color: "#ff9ff3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
       { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
-      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 20, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
       { name: "Lauchzelot",     color: "#f8c291", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
       { name: "Olangaar",       color: "#8395a7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 200, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
       { name: "Arceus",         color: "#c8d6e5", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
       { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 180, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
-      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 20, speed: 0.5, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
       { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 200, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
       { name: "Bisasam",        color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
     ];
@@ -342,6 +350,42 @@
     let gameOver = false;
     let lastTime = 0;
     let eliminationOrder = [];
+
+    // Hilfsfunktion: Berechnet effektiven Radius der welligen Wand für einen bestimmten Winkel
+    function getWavyRadius(angle) {
+      return arenaRadius + Math.sin(angle * waveFrequency + wavePhase) * waveAmplitude;
+    }
+
+    // Aktualisiert Bumper-Position passend zum aktuellen Arenaradius und Wellenform
+    function updateBumperPosition() {
+      if (!activeBumper) return;
+      const r = getWavyRadius(activeBumper.angle) - 15;
+      activeBumper.x = centerX + Math.cos(activeBumper.angle) * r;
+      activeBumper.y = centerY + Math.sin(activeBumper.angle) * r;
+    }
+
+    // Spawnt einen neuen Bumper an zufälligem Winkel
+    function spawnBumper() {
+      const angle = Math.random() * Math.PI * 2;
+      activeBumper = {
+        angle: angle,
+        radius: 18,
+        x: 0,
+        y: 0,
+        pulseTimer: 0
+      };
+      updateBumperPosition();
+    }
+
+    // Ändert Wellenmuster & Bumper-Position bei jeder Kreisverkleinerung
+    function applyShrinkAndReshape() {
+      arenaRadius *= 0.90;
+      waveAmplitude = 6 + Math.random() * 8; 
+      waveFrequency = Math.floor(4 + Math.random() * 6);
+      wavePhase = Math.random() * Math.PI * 2;
+
+      spawnBumper();
+    }
 
     function updateSpeedMultiplier(val) {
       speedMultiplier = parseFloat(val);
@@ -410,7 +454,7 @@
         this.image.onload = () => { this.imageLoaded = true; };
 
         const angle = Math.random() * Math.PI * 2;
-        const r = Math.sqrt(Math.random()) * (arenaRadius - 40);
+        const r = Math.sqrt(Math.random()) * (arenaRadius - 50);
         this.x = centerX + r * Math.cos(angle);
         this.y = centerY + r * Math.sin(angle);
 
@@ -551,28 +595,62 @@
         this.x += currentVx;
         this.y += currentVy;
 
-        // Sauberer Arenarand-Abprall ohne Tempogewinn
+        // --- Kollisionsprüfung mit dem Bumper ---
+        if (activeBumper) {
+          const bDist = Math.hypot(this.x - activeBumper.x, this.y - activeBumper.y);
+          if (bDist <= this.radius + activeBumper.radius) {
+            let bx = this.x - activeBumper.x;
+            let by = this.y - activeBumper.y;
+            let bLen = Math.hypot(bx, by) || 1;
+            
+            // Impuls in Richtung Arena-Inneres/Weg vom Bumper
+            const bumpImpulse = 1.3;
+            this.vx = (bx / bLen) * this.baseSpeed * bumpImpulse;
+            this.vy = (by / bLen) * this.baseSpeed * bumpImpulse;
+
+            // Position minimal korrigieren
+            this.x = activeBumper.x + (bx / bLen) * (this.radius + activeBumper.radius + 2);
+            activeBumper.pulseTimer = 0.25; // Optischer Treffer-Effekt
+          }
+        }
+
+        // --- Kollisionsprüfung mit der welligen Arenawand ---
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+        const currentAngle = Math.atan2(dy, dx);
+        const maxRadius = getWavyRadius(currentAngle);
 
-        if (distanceToCenter + this.radius > arenaRadius) {
-          const nx = dx / distanceToCenter;
-          const ny = dy / distanceToCenter;
+        if (distanceToCenter + this.radius > maxRadius) {
+          // Numerische Ermittlung der Wandoberflächen-Normalen
+          const deltaA = 0.01;
+          const r1 = getWavyRadius(currentAngle - deltaA);
+          const r2 = getWavyRadius(currentAngle + deltaA);
+          const dr = (r2 - r1) / (2 * deltaA);
 
-          // Vektor exakt an der Wand spiegeln
+          // Tangentialer & Normalenvektor der Welle
+          let nx = Math.cos(currentAngle) - (dr / maxRadius) * Math.sin(currentAngle);
+          let ny = Math.sin(currentAngle) + (dr / maxRadius) * Math.cos(currentAngle);
+          const nLen = Math.hypot(nx, ny) || 1;
+          nx /= nLen;
+          ny /= nLen;
+
+          // Vektor an der Wellennormalen spiegeln
           const dot = this.vx * nx + this.vy * ny;
-          this.vx -= 2 * dot * nx;
-          this.vy -= 2 * dot * ny;
+          if (dot > 0) { // Nur spiegeln wenn in Richtung Wand unterwegs
+            this.vx -= 2 * dot * nx;
+            this.vy -= 2 * dot * ny;
+          }
 
-          // Geschwindigkeitsvektor exakt auf Grundtempo halten
+          // Geschwindigkeitsvektor exakt auf Grundtempo normieren
           const currentLen = Math.hypot(this.vx, this.vy) || 1;
           this.vx = (this.vx / currentLen) * this.baseSpeed;
           this.vy = (this.vy / currentLen) * this.baseSpeed;
 
-          // Position an die Arenawand korrigieren
-          this.x = centerX + nx * (arenaRadius - this.radius);
-          this.y = centerY + ny * (arenaRadius - this.radius);
+          // Position an den inneren Wellenrand anpassen
+          const correctedRadius = maxRadius - this.radius - 1;
+          this.x = centerX + Math.cos(currentAngle) * correctedRadius;
+          this.y = centerY + Math.sin(currentAngle) * correctedRadius;
         }
 
         // Normale Angriffe
@@ -873,6 +951,13 @@
       battleTime = 0;
       shrinkIntervalCount = 0;
 
+      // Wellen-Initialisierung für Kampfstart
+      waveAmplitude = 8;
+      waveFrequency = 6;
+      wavePhase = 0;
+
+      spawnBumper();
+
       activePokemons = [];
       projectiles = [];
       visualEffects = [];
@@ -893,6 +978,61 @@
       updatePlacementList();
     }
 
+    function drawWavyArena() {
+      ctx.beginPath();
+      const steps = 180;
+      for (let i = 0; i <= steps; i++) {
+        const angle = (i / steps) * Math.PI * 2;
+        const r = getWavyRadius(angle);
+        const x = centerX + Math.cos(angle) * r;
+        const y = centerY + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = "#22222b";
+      ctx.fill();
+      ctx.strokeStyle = "#ffcb05";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
+    function drawBumper() {
+      if (!activeBumper) return;
+
+      if (activeBumper.pulseTimer > 0) {
+        activeBumper.pulseTimer -= 0.016 * speedMultiplier;
+      }
+
+      ctx.save();
+      ctx.translate(activeBumper.x, activeBumper.y);
+
+      // Pulsierender Außenring bei Kollision
+      if (activeBumper.pulseTimer > 0) {
+        ctx.beginPath();
+        ctx.arc(0, 0, activeBumper.radius + 6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 234, 167, 0.6)";
+        ctx.fill();
+      }
+
+      // Haupt-Bumper
+      ctx.beginPath();
+      ctx.arc(0, 0, activeBumper.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#ff4757";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Bumper-Muster / Pinball-Look
+      ctx.beginPath();
+      ctx.arc(0, 0, activeBumper.radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffcb05";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
     function gameLoop(timestamp) {
       if (!lastTime) lastTime = timestamp;
       const deltaTime = ((timestamp - lastTime) / 1000) * speedMultiplier;
@@ -906,17 +1046,15 @@
         const intervalsPassed = Math.floor(battleTime / 40);
         if (intervalsPassed > shrinkIntervalCount) {
           shrinkIntervalCount = intervalsPassed;
-          arenaRadius *= 0.90;
+          applyShrinkAndReshape();
         }
       }
 
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
-      ctx.fillStyle = "#22222b";
-      ctx.fill();
-      ctx.strokeStyle = "#ffcb05";
-      ctx.lineWidth = 4;
-      ctx.stroke();
+      // Arena & Bumper zeichnen
+      drawWavyArena();
+      if (matchStarted) {
+        drawBumper();
+      }
 
       if (matchStarted) {
         for (let i = scorchTrails.length - 1; i >= 0; i--) {
