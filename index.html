@@ -302,35 +302,35 @@
 
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
-      { name: "Rotom",          color: "#f39c12", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
+      { name: "Rotom",          color: "#f39c12", maxHp: 300, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 140, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
       { name: "Impi",           color: "#0984e3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
       { name: "Nachtara",       color: "#6c5ce7", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
-      { name: "Pikachu",        color: "#ffeaa7", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
+      { name: "Pikachu",        color: "#ffeaa7", maxHp: 300, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
       { name: "Gengar",         color: "#a29bfe", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 190, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
-      { name: "Relaxo",         color: "#636e72", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+      { name: "Relaxo",         color: "#636e72", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 4.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
-      { name: "Stolloss",       color: "#a4b0be", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
-      { name: "Pelipper",       color: "#70a1ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
-      { name: "Rabigator",      color: "#ff6348", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
+      { name: "Stolloss",       color: "#a4b0be", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 4.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+      { name: "Pelipper",       color: "#70a1ff", maxHp: 300, attack: 22, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 300, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
+      { name: "Rabigator",      color: "#ff6348", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
       { name: "Zytomega",       color: "#1dd1a1", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/579.png" },
       { name: "Fermicula",      color: "#57606f", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/632.png" },
       { name: "Brigaron",       color: "#10ac84", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/652.png" },
       { name: "Fiaro",          color: "#ff4757", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 160, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png" },
-      { name: "Elezard",        color: "#eccc68", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/695.png" },
+      { name: "Elezard",        color: "#eccc68", maxHp: 300, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/695.png" },
       { name: "Durengard",      color: "#5f27cd", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png" },
-      { name: "Silvarro",       color: "#009432", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
+      { name: "Silvarro",       color: "#009432", maxHp: 300, attack: 22, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 300, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
       { name: "Curelei",        color: "#ff9ff3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
       { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 140, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
-      { name: "Krarmor",        color: "#341f97", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 4.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
       { name: "Lauchzelot",     color: "#f8c291", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.7, attackRange: 140, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
       { name: "Olangaar",       color: "#8395a7", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 3.5, attackRange: 120, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
-      { name: "Katapuldra",     color: "#00d2d3", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 260, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
-      { name: "Arceus",         color: "#c8d6e5", maxHp: 300, attack: 20, defense: 15, speed: 0.6, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
-      { name: "Pamomamo",       color: "#feca57", maxHp: 300, attack: 15, defense: 15, speed: 0.7, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
-      { name: "Saltigant",      color: "#ee5253", maxHp: 300, attack: 20, defense: 15, speed: 0.3, attackSpeed: 2.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
-      { name: "Eisenbündel",    color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 250, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
+      { name: "Katapuldra",     color: "#00d2d3", maxHp: 300, attack: 22, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 300, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
+      { name: "Arceus",         color: "#c8d6e5", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 2.0, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
+      { name: "Pamomamo",       color: "#feca57", maxHp: 300, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 300, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 4.0, attackRange: 100, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Eisenbündel",    color: "#54a0ff", maxHp: 300, attack: 22, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 300, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
       { name: "Bisasam",        color: "#54a0ff", maxHp: 300, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
     ];
 
@@ -542,7 +542,7 @@
             x: this.x,
             y: this.y,
             radius: 22,
-            timer: 2.0,
+            timer: 3.0,
             owner: this
           });
         }
@@ -617,7 +617,7 @@
       }
 
       triggerAoeSlam() {
-        const slamRadius = 140;
+        const slamRadius = 200;
         const baseDmg = Math.max(3, this.attack);
         visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.35 });
 
