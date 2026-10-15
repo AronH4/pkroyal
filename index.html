@@ -441,7 +441,7 @@
 
         this.dots = [];
         this.curseStacks = 0;
-        this.aoeDebuff = false; // 15% weniger Schaden verursachen
+        this.aoeDebuff = false; // 25% weniger Schaden verursachen
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -499,13 +499,13 @@
                 if (Math.hypot(other.x - orb.x, other.y - orb.y) <= other.radius + orbRadius) {
                   const currentCd = this.orbHitCooldowns.get(other.id) || 0;
                   if (currentCd <= 0) {
-                    const baseDmg = Math.max(3, this.attack * 1.2);
+                    const baseDmg = Math.max(3, this.attack * 1.0);
                     other.takeDamage(baseDmg, this.id);
 
                     let kx = other.x - this.x;
                     let ky = other.y - this.y;
                     let kDist = Math.hypot(kx, ky) || 1;
-                    const knockbackDist = 35;
+                    const knockbackDist = 30;
 
                     other.x += (kx / kDist) * knockbackDist;
                     other.y += (ky / kDist) * knockbackDist;
@@ -524,7 +524,7 @@
             this.slamCooldown -= deltaTime;
           } else {
             this.triggerAoeSlam();
-            this.slamCooldown = 18.0 / this.attackSpeed; // Längeres Intervall
+            this.slamCooldown = 16.0 / this.attackSpeed; // Längeres Intervall
           }
         }
 
@@ -551,7 +551,7 @@
         activePokemons.forEach(other => {
           if (other.type === "slow_feld" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
-            if (dist <= 170) {
+            if (dist <= 160) {
               effectiveSpeed *= 0.35;
               this.isSlowed = true;
               this.takeDamage(2.9 * deltaTime, other.id);
@@ -575,7 +575,7 @@
             x: this.x,
             y: this.y,
             radius: 25,
-            timer: 7.0,
+            timer: 6.0,
             ownerId: this.id
           });
         }
@@ -598,7 +598,7 @@
 
         // Curse Status
         if (this.curseStacks > 0) {
-          this.takeDamage(this.curseStacks * 2.4 * deltaTime, null);
+          this.takeDamage(this.curseStacks * 2.2 * deltaTime, null);
         }
 
         // Bewegung
@@ -691,9 +691,9 @@
         const slamRadius = 170;
         // Mehr Schaden für den Auto-Trigger
         let baseDmg = Math.max(3, this.attack) * 1.0;
-        if (this.aoeDebuff) baseDmg *= 0.85; // 15% weniger Schaden durch Debuff
+        if (this.aoeDebuff) baseDmg *= 0.75; // 25% weniger Schaden durch Debuff
 
-        visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.35 });
+        visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.5 });
 
         activePokemons.forEach(p => {
           if (p.hp > 0 && p !== this) {
@@ -707,7 +707,7 @@
       attackEnemy(target) {
         let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
         if (this.aoeDebuff) {
-          rawDmg *= 0.85; // 15% Schadensreduktion bei active Debuff
+          rawDmg *= 0.75; // 25% Schadensreduktion bei active Debuff
         }
 
         if (this.type === "snipe_shot") {
@@ -890,7 +890,7 @@
           let finalDmg = this.damage;
 
           if (this.specialType === "crit" && Math.random() < 0.30) {
-            finalDmg *= 2.3;
+            finalDmg *= 2.5;
             visualEffects.push({ type: "crit_text", x: this.target.x, y: this.target.y - 15, timer: 0.5, text: "CRIT!" });
           }
 
@@ -1194,7 +1194,7 @@
           if (fx.type === "circle_aoe") {
             ctx.beginPath();
             ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(116, 125, 140, 0.35)";
+            ctx.fillStyle = "rgba(116, 125, 140, 0.5)";
             ctx.fill();
           } else if (fx.type === "piercing_laser") {
             ctx.strokeStyle = "rgba(9, 132, 227, 0.8)";
