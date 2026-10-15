@@ -310,7 +310,7 @@
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
-      { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
+      { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
       { name: "Impi",           color: "#0984e3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
       { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
@@ -329,7 +329,7 @@
       { name: "Durengard",      color: "#5f27cd", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png" },
       { name: "Silvarro",       color: "#009432", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
       { name: "Curelei",        color: "#ff9ff3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
-      { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 400, attack: 20, defense: 18, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
+      { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
       { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
       { name: "Lauchzelot",     color: "#f8c291", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
       { name: "Olangaar",       color: "#8395a7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
@@ -441,7 +441,7 @@
 
         this.dots = [];
         this.curseStacks = 0;
-        this.aoeDebuff = false; // 25% weniger Schaden verursachen
+        this.aoeDebuff = false; // 30% weniger Schaden verursachen
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -564,7 +564,7 @@
           if (trail.ownerId !== this.id) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
             if (dist < trail.radius) {
-              this.takeDamage(2.0 * deltaTime, trail.ownerId);
+              this.takeDamage(1.8 * deltaTime, trail.ownerId);
             }
           }
         });
@@ -598,7 +598,7 @@
 
         // Curse Status
         if (this.curseStacks > 0) {
-          this.takeDamage(this.curseStacks * 2.2 * deltaTime, null);
+          this.takeDamage(this.curseStacks * 2.0 * deltaTime, null);
         }
 
         // Bewegung
@@ -691,7 +691,7 @@
         const slamRadius = 170;
         // Mehr Schaden für den Auto-Trigger
         let baseDmg = Math.max(3, this.attack) * 1.0;
-        if (this.aoeDebuff) baseDmg *= 0.75; // 25% weniger Schaden durch Debuff
+        if (this.aoeDebuff) baseDmg *= 0.70; // 30% weniger Schaden durch Debuff
 
         visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.5 });
 
@@ -707,7 +707,7 @@
       attackEnemy(target) {
         let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
         if (this.aoeDebuff) {
-          rawDmg *= 0.75; // 25% Schadensreduktion bei active Debuff
+          rawDmg *= 0.70; // 30% Schadensreduktion bei active Debuff
         }
 
         if (this.type === "snipe_shot") {
@@ -724,7 +724,7 @@
             if (p.hp > 0 && p !== this) {
               const distToLine = distanceToSegment({ x: p.x, y: p.y }, { x: this.x, y: this.y }, { x: endX, y: endY });
               if (distToLine <= p.radius + 8) {
-                p.takeDamage(rawDmg * 1.2, this.id);
+                p.takeDamage(rawDmg * 1.4, this.id);
               }
             }
           });
@@ -1146,7 +1146,7 @@
           for (let p of activePokemons) {
             if (p.hp > 0 && Math.hypot(p.x - seed.x, p.y - seed.y) <= p.radius + seed.radius) {
               if (p.id === seed.ownerId) {
-                p.hp = Math.min(p.maxHp, p.hp + 25);
+                p.hp = Math.min(p.maxHp, p.hp + 30);
                 seedHit = true;
               } else {
                 p.takeDamage(50, seed.ownerId);
