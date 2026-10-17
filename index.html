@@ -312,9 +312,9 @@
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
       { name: "Impi",           color: "#0984e3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
-      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.3, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
-      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.8, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
       { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
@@ -505,7 +505,7 @@
                     let kx = other.x - this.x;
                     let ky = other.y - this.y;
                     let kDist = Math.hypot(kx, ky) || 1;
-                    const knockbackDist = 30;
+                    const knockbackDist = 25;
 
                     other.x += (kx / kDist) * knockbackDist;
                     other.y += (ky / kDist) * knockbackDist;
@@ -574,8 +574,8 @@
           scorchTrails.push({
             x: this.x,
             y: this.y,
-            radius: 25,
-            timer: 6.0,
+            radius: 20,
+            timer: 5.0,
             ownerId: this.id
           });
         }
