@@ -1098,7 +1098,7 @@
         activePokemons.push(new Pokemon(pokemonTemplates[idx], id));
       });
 
-      const dt = 0.05; // 20 Ticks/Sekunde für schnelle & präzise Logik
+      const dt = 0.016; // 20 Ticks/Sekunde für schnelle & präzise Logik
       let maxTicks = 10000; // Schutz vor Endlosschleifen (max 500s Simulation)
 
       while (maxTicks-- > 0) {
