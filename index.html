@@ -1046,7 +1046,7 @@
       });
 
       document.getElementById("setupMenu").style.display = "none";
-      document.getElementById("toggleMenuBtn").innerText = "⚙️ Toggle";
+      document.getElementById("toggleMenuBtn").innerText = "⚙️";
       updateLeaderboard();
       updatePlacementList();
     }
@@ -1179,7 +1179,7 @@
           const winnerAnnounce = document.getElementById("winnerAnnounce");
           winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " wins!" : "Draw!";
           document.getElementById("setupMenu").style.display = "block";
-          document.getElementById("toggleMenuBtn").innerText = "⚙️;
+          document.getElementById("toggleMenuBtn").innerText = "⚙️";
         }
 
         activePokemons.forEach(pokemon => {
