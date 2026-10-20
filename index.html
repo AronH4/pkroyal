@@ -409,10 +409,10 @@
         this.curseStacks = 0;
         this.aoeDebuff = false;
 
-        // Berserker Variablen
-        this.berserkerActive = false;
-        this.berserkerTimer = 0;
-        this.berserkerTriggered = false;
+        //  Variablen
+        this.Active = false;
+        this.Timer = 0;
+        this.Triggered = false;
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -447,23 +447,23 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        // Berserker Logik
-        if (this.type === "berserker") {
-          if (!this.berserkerTriggered && this.hp <= 100) {
-            this.berserkerTriggered = true;
-            this.berserkerActive = true;
-            this.berserkerTimer = 25.0;
+        //  Logik
+        if (this.type === "") {
+          if (!this.Triggered && this.hp <= 100) {
+            this.Triggered = true;
+            this.Active = true;
+            this.Timer = 25.0;
           }
-          if (this.berserkerActive) {
-            this.berserkerTimer -= deltaTime;
-            if (this.berserkerTimer <= 0) {
-              this.berserkerActive = false;
+          if (this.Active) {
+            this.Timer -= deltaTime;
+            if (this.Timer <= 0) {
+              this.Active = false;
             }
           }
         }
 
         let effectiveSpeed = this.baseSpeed;
-        if (this.berserkerActive) {
+        if (this.Active) {
           effectiveSpeed *= 3.0;
         }
         this.isSlowed = false;
@@ -878,11 +878,11 @@
 
           this.target.takeDamage(finalDmg, this.shooterId);
 
-          // Life Steal Verteilung für Berserker (10% des verursachten Schadens)
+          // Life Steal Verteilung für Berserker
           if (this.isBerserk) {
             const shooter = activePokemons.find(p => p.id === this.shooterId);
             if (shooter && shooter.hp > 0) {
-              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.10);
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.50);
             }
           }
 
