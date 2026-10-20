@@ -237,14 +237,14 @@
   <div id="topControls">
     <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
     <div class="speed-control">
-      <span>🏃 Speed:</span>
-      <input type="range" id="speedSlider" min="1.0" max="8.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
+      <span>Speed:</span>
+      <input type="range" id="speedSlider" min="1.0" max="9.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
       <span id="speedVal">1.0x</span>
     </div>
   </div>
 
   <div id="setupMenu">
-    <div style="font-weight: bold; text-align: center;">Get Ready:</div>
+    <div style="font-weight: bold; text-align: center;">Get Ready!</div>
     <div class="pokemon-grid" id="pokemonSelectionList"></div>
     <div class="button-group">
       <button class="secondary" onclick="selectAll(true)">All</button>
@@ -409,10 +409,10 @@
         this.curseStacks = 0;
         this.aoeDebuff = false;
 
-        //  Variablen
-        this.Active = false;
-        this.Timer = 0;
-        this.Triggered = false;
+        // Berserker Variablen
+        this.berserkerActive = false;
+        this.berserkerTimer = 0;
+        this.berserkerTriggered = false;
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -447,23 +447,23 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        //  Logik
-        if (this.type === "") {
-          if (!this.Triggered && this.hp <= 100) {
-            this.Triggered = true;
-            this.Active = true;
-            this.Timer = 25.0;
+        
+        if (this.type === "berserker") {
+          if (!this.berserkerTriggered && this.hp <= 100) {
+            this.berserkerTriggered = true;
+            this.berserkerActive = true;
+            this.berserkerTimer = 30.0;
           }
-          if (this.Active) {
-            this.Timer -= deltaTime;
-            if (this.Timer <= 0) {
-              this.Active = false;
+          if (this.berserkerActive) {
+            this.berserkerTimer -= deltaTime;
+            if (this.berserkerTimer <= 0) {
+              this.berserkerActive = false;
             }
           }
         }
 
         let effectiveSpeed = this.baseSpeed;
-        if (this.Active) {
+        if (this.berserkerActive) {
           effectiveSpeed *= 3.0;
         }
         this.isSlowed = false;
@@ -652,7 +652,7 @@
           this.y = centerY + Math.sin(currentAngle) * correctedRadius;
         }
 
-        
+      
         if (this.attackCooldown > 0) {
           this.attackCooldown -= deltaTime;
         } else {
@@ -661,7 +661,7 @@
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
             if (this.berserkerActive) {
-              effectiveAttackSpeed /= 2.0;
+              effectiveAttackSpeed /= 2.0; // 
             }
             this.attackCooldown = effectiveAttackSpeed;
           }
@@ -882,7 +882,7 @@
           if (this.isBerserk) {
             const shooter = activePokemons.find(p => p.id === this.shooterId);
             if (shooter && shooter.hp > 0) {
-              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.10);
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25);
             }
           }
 
@@ -1039,14 +1039,14 @@
       eliminationOrder = [];
       gameOver = false;
       matchStarted = true;
-      document.getElementById("winnerAnnounce").innerText = "Battle in progress...";
+      document.getElementById("winnerAnnounce").innerText = "Der Kampf läuft...";
 
       selectedIndices.forEach((idx, id) => {
         activePokemons.push(new Pokemon(pokemonTemplates[idx], id));
       });
 
       document.getElementById("setupMenu").style.display = "none";
-      document.getElementById("toggleMenuBtn").innerText = "⚙️";
+      document.getElementById("toggleMenuBtn").innerText = "⚙️ Toggle";
       updateLeaderboard();
       updatePlacementList();
     }
@@ -1179,7 +1179,7 @@
           const winnerAnnounce = document.getElementById("winnerAnnounce");
           winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " wins!" : "Draw!";
           document.getElementById("setupMenu").style.display = "block";
-          document.getElementById("toggleMenuBtn").innerText = "⚙️";
+          document.getElementById("toggleMenuBtn").innerText = "⚙️;
         }
 
         activePokemons.forEach(pokemon => {
