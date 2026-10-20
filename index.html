@@ -882,7 +882,7 @@
           if (this.isBerserk) {
             const shooter = activePokemons.find(p => p.id === this.shooterId);
             if (shooter && shooter.hp > 0) {
-              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.50);
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.10);
             }
           }
 
