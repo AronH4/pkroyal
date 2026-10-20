@@ -320,9 +320,9 @@
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
       { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 23, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
-      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 160, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
-      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 160, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
       { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
@@ -438,7 +438,7 @@
       applyDoT(type, duration, dps, attackerId = null) {
         if (type === "curse") {
           this.curseStacks++;
-          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 0.8, attackerId });
+          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 1.0, attackerId });
           return;
         }
         this.dots.push({ type, duration, dps, attackerId });
@@ -578,7 +578,7 @@
           
           let currentDps = dot.dps;
           if (dot.type === "curse_tick") {
-            currentDps = this.curseStacks * 2.0;
+            currentDps = this.curseStacks * 1.0;
           }
 
           this.takeDamage(currentDps * deltaTime, dot.attackerId);
