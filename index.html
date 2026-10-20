@@ -432,6 +432,8 @@
       applyDoT(type, duration, dps, attackerId = null) {
         if (type === "curse") {
           this.curseStacks++;
+          // Fluch als echten DoT mit fortlaufendem Schaden und korrekter Angreifer-ID einreihen
+          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 2.0, attackerId });
           return;
         }
         this.dots.push({ type, duration, dps, attackerId });
@@ -544,24 +546,30 @@
           });
         }
 
-        // Status-Effekte abarbeiten
+        // Status-Effekte (inkl. Curse) abarbeiten
         for (let i = this.dots.length - 1; i >= 0; i--) {
           const dot = this.dots[i];
-          dot.duration -= deltaTime;
-          this.takeDamage(dot.dps * deltaTime, dot.attackerId);
+          if (dot.type !== "curse_tick") {
+            dot.duration -= deltaTime;
+          }
+          
+          let currentDps = dot.dps;
+          if (dot.type === "curse_tick") {
+            currentDps = this.curseStacks * 2.0; // Dynamisch anpassen falls Stacks steigen
+          }
+
+          this.takeDamage(currentDps * deltaTime, dot.attackerId);
 
           if (dot.type === "leech" && dot.attackerId !== null) {
             const attacker = activePokemons.find(p => p.id === dot.attackerId);
             if (attacker && attacker.hp > 0) {
-              attacker.hp = Math.min(attacker.maxHp, attacker.hp + (dot.dps * 0.6) * deltaTime);
+              attacker.hp = Math.min(attacker.maxHp, attacker.hp + (currentDps * 0.6) * deltaTime);
             }
           }
 
-          if (dot.duration <= 0) this.dots.splice(i, 1);
-        }
-
-        if (this.curseStacks > 0) {
-          this.takeDamage(this.curseStacks * 2.0 * deltaTime, null);
+          if (dot.type !== "curse_tick" && dot.duration <= 0) {
+            this.dots.splice(i, 1);
+          }
         }
 
         // Bewegung ausführen
@@ -692,7 +700,6 @@
         if (amount <= 0 || this.hp <= 0) return;
         this.hp -= amount;
 
-        // Schaden wird auch nach dem Ausscheiden für das Ranking getrackt (Abfrage auf .hp <= 0 entfernt)
         if (attackerId !== null && amount > 0) {
           const attacker = activePokemons.find(p => p.id === attackerId);
           if (attacker) attacker.totalDamageDealt += amount;
@@ -918,7 +925,6 @@
       lbContainer.innerHTML = "";
       sorted.forEach(p => {
         const item = document.createElement("div");
-        // Keine Durchstreichung mehr im Damage Ranking (.dead Klasse entfernt)
         item.className = "lb-item";
         item.innerHTML = `
           <span class="lb-name">
