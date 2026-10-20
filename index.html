@@ -311,14 +311,15 @@
       snipe_shot: "#0984e3",  
       scorch: "#ff7f50",      
       barrier: "#ff9ff3",     
-      leech_seed: "#2ed573"   
+      leech_seed: "#2ed573",
+      berserker: "#8b0000"    // Kastanienbraun / Dunkelrot für Berserker
     };
 
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
-      { name: "Impi",           color: "#0984e3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
       { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
       { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
@@ -408,6 +409,11 @@
         this.curseStacks = 0;
         this.aoeDebuff = false;
 
+        // Berserker Variablen
+        this.berserkerActive = false;
+        this.berserkerTimer = 0;
+        this.berserkerTriggered = false;
+
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
 
@@ -432,7 +438,6 @@
       applyDoT(type, duration, dps, attackerId = null) {
         if (type === "curse") {
           this.curseStacks++;
-          // Fluch als echten DoT mit fortlaufendem Schaden und korrekter Angreifer-ID einreihen
           this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 1.0, attackerId });
           return;
         }
@@ -442,7 +447,25 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
+        // Berserker Logik prüfen (Auslösen bei <= 100 HP, 1x pro Runde, 15 Sekunden Dauer)
+        if (this.type === "berserker") {
+          if (!this.berserkerTriggered && this.hp <= 100) {
+            this.berserkerTriggered = true;
+            this.berserkerActive = true;
+            this.berserkerTimer = 15.0;
+          }
+          if (this.berserkerActive) {
+            this.berserkerTimer -= deltaTime;
+            if (this.berserkerTimer <= 0) {
+              this.berserkerActive = false;
+            }
+          }
+        }
+
         let effectiveSpeed = this.baseSpeed;
+        if (this.berserkerActive) {
+          effectiveSpeed *= 1.5;
+        }
         this.isSlowed = false;
 
         // Spezialfähigkeit: Barrier
@@ -555,7 +578,7 @@
           
           let currentDps = dot.dps;
           if (dot.type === "curse_tick") {
-            currentDps = this.curseStacks * 2.0; // Dynamisch anpassen falls Stacks steigen
+            currentDps = this.curseStacks * 2.0;
           }
 
           this.takeDamage(currentDps * deltaTime, dot.attackerId);
@@ -629,14 +652,18 @@
           this.y = centerY + Math.sin(currentAngle) * correctedRadius;
         }
 
-        // Angriffs-Logik
+        // Angriffs-Logik (Berücksichtigt Berserker Angriffsgeschwindigkeits-Multiplikator von 1.5)
         if (this.attackCooldown > 0) {
           this.attackCooldown -= deltaTime;
         } else {
           const target = this.findNearestEnemy();
           if (target) {
             this.attackEnemy(target);
-            this.attackCooldown = this.attackSpeed;
+            let effectiveAttackSpeed = this.attackSpeed;
+            if (this.berserkerActive) {
+              effectiveAttackSpeed /= 1.5; // Kürzere Cooldowns = schnellere Angriffe
+            }
+            this.attackCooldown = effectiveAttackSpeed;
           }
         }
       }
@@ -688,11 +715,14 @@
               const distToLine = distanceToSegment({ x: p.x, y: p.y }, { x: this.x, y: this.y }, { x: endX, y: endY });
               if (distToLine <= p.radius + 8) {
                 p.takeDamage(rawDmg * 1.5, this.id);
+                if (this.berserkerActive) {
+                  this.hp = Math.min(this.maxHp, this.hp + (rawDmg * 1.5) * 0.10);
+                }
               }
             }
           });
         } else {
-          projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, rawDmg, this.type, this.id));
+          projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, rawDmg, this.type, this.id, this.berserkerActive));
         }
       }
 
@@ -713,6 +743,14 @@
 
       draw() {
         if (this.hp <= 0) return;
+
+        // Berserker Umleuchtung / Glow Effekt
+        if (this.berserkerActive) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(139, 0, 0, 0.5)"; // Kastanienbraun / Dunkelrot
+          ctx.fill();
+        }
 
         if (this.type === "slow_feld") {
           ctx.beginPath();
@@ -776,6 +814,7 @@
         if (this.isSlowed) statusIcons += "❄️";
         if (this.dots.some(d => d.type === "leech")) statusIcons += "🌱";
         if (this.aoeDebuff) statusIcons += "🏳️";
+        if (this.berserkerActive) statusIcons += "💢";
 
         if (statusIcons !== "") {
           ctx.font = "12px Arial";
@@ -786,7 +825,7 @@
     }
 
     class Projectile {
-      constructor(x, y, target, color, damage, specialType, shooterId) {
+      constructor(x, y, target, color, damage, specialType, shooterId, isBerserk = false) {
         this.x = x;
         this.y = y;
         this.target = target;
@@ -794,6 +833,7 @@
         this.damage = damage;
         this.specialType = specialType;
         this.shooterId = shooterId;
+        this.isBerserk = isBerserk;
         this.baseSpeed = 5.0;
         this.radius = 4;
         this.hit = false;
@@ -837,6 +877,14 @@
           }
 
           this.target.takeDamage(finalDmg, this.shooterId);
+
+          // Life Steal Verteilung für Berserker (10% des verursachten Schadens)
+          if (this.isBerserk) {
+            const shooter = activePokemons.find(p => p.id === this.shooterId);
+            if (shooter && shooter.hp > 0) {
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.10);
+            }
+          }
 
           if (this.specialType === "burn") this.target.applyDoT("burn", 8, 5, this.shooterId);
           if (this.specialType === "curse_dot") this.target.applyDoT("curse", 0, 0, this.shooterId);
