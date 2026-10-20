@@ -312,14 +312,14 @@
       scorch: "#ff7f50",      
       barrier: "#ff9ff3",     
       leech_seed: "#2ed573",
-      berserker: "#8b0000"    // Kastanienbraun / Dunkelrot für Berserker
+      berserker: "#8b0000"
     };
 
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
-      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 22, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
       { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
       { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
@@ -447,12 +447,12 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        // Berserker Logik prüfen (Auslösen bei <= 100 HP, 1x pro Runde, 15 Sekunden Dauer)
+        // Berserker Logik
         if (this.type === "berserker") {
           if (!this.berserkerTriggered && this.hp <= 100) {
             this.berserkerTriggered = true;
             this.berserkerActive = true;
-            this.berserkerTimer = 15.0;
+            this.berserkerTimer = 25.0;
           }
           if (this.berserkerActive) {
             this.berserkerTimer -= deltaTime;
@@ -464,7 +464,7 @@
 
         let effectiveSpeed = this.baseSpeed;
         if (this.berserkerActive) {
-          effectiveSpeed *= 1.5;
+          effectiveSpeed *= 2.0;
         }
         this.isSlowed = false;
 
@@ -652,7 +652,7 @@
           this.y = centerY + Math.sin(currentAngle) * correctedRadius;
         }
 
-        // Angriffs-Logik (Berücksichtigt Berserker Angriffsgeschwindigkeits-Multiplikator von 1.5)
+        
         if (this.attackCooldown > 0) {
           this.attackCooldown -= deltaTime;
         } else {
@@ -661,7 +661,7 @@
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
             if (this.berserkerActive) {
-              effectiveAttackSpeed /= 1.5; // Kürzere Cooldowns = schnellere Angriffe
+              effectiveAttackSpeed /= 1.5;
             }
             this.attackCooldown = effectiveAttackSpeed;
           }
