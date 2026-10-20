@@ -240,7 +240,7 @@
   <div id="winnerAnnounce">deine Auswahl und starte den Kampf!</div>
 
   <div id="topControls">
-    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️ Menü ausblenden</button>
+    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️ Toggle/button>
     <div class="speed-control">
       <span>🏃 Tempo:</span>
       <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSpeedMultiplier(this.value)">
@@ -252,22 +252,22 @@
     <div style="font-weight: bold; text-align: center;">Wähle die Teilnehmer für den Kampf:</div>
     <div class="pokemon-grid" id="pokemonSelectionList"></div>
     <div class="button-group">
-      <button class="secondary" onclick="selectAll(true)">Alle auswählen</button>
-      <button class="secondary" onclick="selectAll(false)">Alle abwählen</button>
-      <button onclick="startSelectedMatch()">⚔️ Kampf starten!</button>
+      <button class="secondary" onclick="selectAll(true)">Alle</button>
+      <button class="secondary" onclick="selectAll(false)">Keiner</button>
+      <button onclick="startSelectedMatch()">⚔️ GO!</button>
     </div>
   </div>
 
   <div class="main-container">
     <div id="placementPanel" class="side-panel">
-      <h3>🏆 Platzierung</h3>
+      <h3>🏆 Placement</h3>
       <div id="placementList"></div>
     </div>
 
     <canvas id="arenaCanvas" width="750" height="750"></canvas>
 
     <div id="leaderboard" class="side-panel">
-      <h3>📊 Schadens-Rangliste</h3>
+      <h3>📊 Damage Ranking</h3>
       <div id="leaderboardList"></div>
     </div>
   </div>
@@ -312,9 +312,9 @@
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
       { name: "Impi",           color: "#0984e3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
-      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
-      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
       { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
@@ -337,8 +337,7 @@
       { name: "Arceus",         color: "#c8d6e5", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "scorch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
       { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
       { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
-      { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" },
-      { name: "Bisasam",        color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" }
+      { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" }
     ];
 
     let activePokemons = [];
@@ -397,10 +396,10 @@
       const btn = document.getElementById("toggleMenuBtn");
       if (menu.style.display === "none") {
         menu.style.display = "block";
-        btn.innerText = "⚙️ Menü ausblenden";
+        btn.innerText = "⚙️ Toggle";
       } else {
         menu.style.display = "none";
-        btn.innerText = "⚙️ Menü einblenden / Auswählen";
+        btn.innerText = "⚙️ Toggle";
       }
     }
 
@@ -441,7 +440,7 @@
 
         this.dots = [];
         this.curseStacks = 0;
-        this.aoeDebuff = false; // 30% weniger Schaden verursachen
+        this.aoeDebuff = false;
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -518,13 +517,13 @@
           });
         }
 
-        // AoE Slam: Seltenerer Auto-Trigger dafür mehr Schaden
+        // AoE Slam
         if (this.type === "aoe_slam") {
           if (this.slamCooldown > 0) {
             this.slamCooldown -= deltaTime;
           } else {
             this.triggerAoeSlam();
-            this.slamCooldown = 16.0 / this.attackSpeed; // Längeres Intervall
+            this.slamCooldown = 16.0 / this.attackSpeed;
           }
         }
 
@@ -689,9 +688,9 @@
 
       triggerAoeSlam() {
         const slamRadius = 170;
-        // Mehr Schaden für den Auto-Trigger
+        
         let baseDmg = Math.max(3, this.attack) * 1.0;
-        if (this.aoeDebuff) baseDmg *= 0.70; // 30% weniger Schaden durch Debuff
+        if (this.aoeDebuff) baseDmg *= 0.70;
 
         visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.5 });
 
@@ -707,7 +706,7 @@
       attackEnemy(target) {
         let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
         if (this.aoeDebuff) {
-          rawDmg *= 0.70; // 30% Schadensreduktion bei active Debuff
+          rawDmg *= 0.70;
         }
 
         if (this.type === "snipe_shot") {
@@ -729,7 +728,7 @@
             }
           });
         } else {
-          // Alle anderen (inklusive AoE Slam Pokémon) schießen normale Projektile
+          
           projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, rawDmg, this.type, this.id));
         }
       }
@@ -896,7 +895,7 @@
 
           this.target.takeDamage(finalDmg, this.shooterId);
 
-          // Burn Effekt anhängen (1 Sekunde länger = 8 Sekunden)
+         
           if (this.specialType === "burn") this.target.applyDoT("burn", 8, 5, this.shooterId);
           if (this.specialType === "curse_dot") this.target.applyDoT("curse", 0, 0, this.shooterId);
           
@@ -1024,7 +1023,7 @@
       });
 
       document.getElementById("setupMenu").style.display = "none";
-      document.getElementById("toggleMenuBtn").innerText = "⚙️ Menü einblenden / Auswählen";
+      document.getElementById("toggleMenuBtn").innerText = "⚙️ Toggle";
       updateLeaderboard();
       updatePlacementList();
     }
