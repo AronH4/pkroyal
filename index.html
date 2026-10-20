@@ -433,7 +433,7 @@
         if (type === "curse") {
           this.curseStacks++;
           // Fluch als echten DoT mit fortlaufendem Schaden und korrekter Angreifer-ID einreihen
-          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 2.0, attackerId });
+          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 1.0, attackerId });
           return;
         }
         this.dots.push({ type, duration, dps, attackerId });
