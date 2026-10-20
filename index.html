@@ -176,11 +176,6 @@
       border-bottom: 1px solid #3a3a4a;
     }
 
-    .lb-item.dead {
-      opacity: 0.4;
-      text-decoration: line-through;
-    }
-
     .lb-name {
       font-weight: bold;
       display: flex;
@@ -697,6 +692,7 @@
         if (amount <= 0 || this.hp <= 0) return;
         this.hp -= amount;
 
+        // Schaden wird auch nach dem Ausscheiden für das Ranking getrackt (Abfrage auf .hp <= 0 entfernt)
         if (attackerId !== null && amount > 0) {
           const attacker = activePokemons.find(p => p.id === attackerId);
           if (attacker) attacker.totalDamageDealt += amount;
@@ -922,7 +918,8 @@
       lbContainer.innerHTML = "";
       sorted.forEach(p => {
         const item = document.createElement("div");
-        item.className = "lb-item" + (p.hp <= 0 ? " dead" : "");
+        // Keine Durchstreichung mehr im Damage Ranking (.dead Klasse entfernt)
+        item.className = "lb-item";
         item.innerHTML = `
           <span class="lb-name">
             <span style="display:inline-block; width:8px; height:8px; background:${p.typeColor}; border-radius:50%; flex-shrink:0;"></span>
