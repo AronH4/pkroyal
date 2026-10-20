@@ -235,20 +235,20 @@
   <div id="winnerAnnounce">Wähle deine Teilnehmer und starte den Kampf!</div>
 
   <div id="topControls">
-    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️ Toggle</button>
+    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
     <div class="speed-control">
-      <span>🏃 Tempo:</span>
-      <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSpeedMultiplier(this.value)">
+      <span>🏃 Speed:</span>
+      <input type="range" id="speedSlider" min="1.0" max="8.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
       <span id="speedVal">1.0x</span>
     </div>
   </div>
 
   <div id="setupMenu">
-    <div style="font-weight: bold; text-align: center;">Wähle die Teilnehmer für den Kampf:</div>
+    <div style="font-weight: bold; text-align: center;">Get Ready:</div>
     <div class="pokemon-grid" id="pokemonSelectionList"></div>
     <div class="button-group">
-      <button class="secondary" onclick="selectAll(true)">Alle</button>
-      <button class="secondary" onclick="selectAll(false)">Keiner</button>
+      <button class="secondary" onclick="selectAll(true)">All</button>
+      <button class="secondary" onclick="selectAll(false)">None</button>
       <button onclick="startSelectedMatch()">⚔️ GO!</button>
     </div>
   </div>
@@ -319,10 +319,10 @@
       { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
       { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
       { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
-      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 22, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
-      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 23, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "berserker", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
       { name: "Pikachu",        color: "#ffeaa7", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "blitz", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
-      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 19, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Gengar",         color: "#a29bfe", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 170, type: "curse_dot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
       { name: "Arkani",         color: "#d63031", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
       { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
       { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
@@ -438,7 +438,7 @@
       applyDoT(type, duration, dps, attackerId = null) {
         if (type === "curse") {
           this.curseStacks++;
-          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 1.0, attackerId });
+          this.dots.push({ type: "curse_tick", duration: Infinity, dps: this.curseStacks * 0.8, attackerId });
           return;
         }
         this.dots.push({ type, duration, dps, attackerId });
@@ -661,7 +661,7 @@
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
             if (this.berserkerActive) {
-              effectiveAttackSpeed /= 1.5;
+              effectiveAttackSpeed /= 2.0;
             }
             this.attackCooldown = effectiveAttackSpeed;
           }
@@ -944,10 +944,10 @@
       const btn = document.getElementById("toggleMenuBtn");
       if (menu.style.display === "none") {
         menu.style.display = "block";
-        btn.innerText = "⚙️ Toggle";
+        btn.innerText = "⚙️";
       } else {
         menu.style.display = "none";
-        btn.innerText = "⚙️ Toggle";
+        btn.innerText = "⚙️";
       }
     }
 
@@ -1018,7 +1018,7 @@
                                    .map(cb => parseInt(cb.value));
 
       if (selectedIndices.length < 2) {
-        alert("Bitte wähle mindestens 2 Pokémon für den Kampf aus!");
+        alert("Select at least 2!");
         return;
       }
 
@@ -1039,14 +1039,14 @@
       eliminationOrder = [];
       gameOver = false;
       matchStarted = true;
-      document.getElementById("winnerAnnounce").innerText = "Der Kampf läuft...";
+      document.getElementById("winnerAnnounce").innerText = "Battle in progress...";
 
       selectedIndices.forEach((idx, id) => {
         activePokemons.push(new Pokemon(pokemonTemplates[idx], id));
       });
 
       document.getElementById("setupMenu").style.display = "none";
-      document.getElementById("toggleMenuBtn").innerText = "⚙️ Toggle";
+      document.getElementById("toggleMenuBtn").innerText = "⚙️";
       updateLeaderboard();
       updatePlacementList();
     }
@@ -1177,9 +1177,9 @@
         if (alivePokemons.length <= 1 && !gameOver) {
           gameOver = true;
           const winnerAnnounce = document.getElementById("winnerAnnounce");
-          winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " hat gewonnen!" : "Unentschieden!";
+          winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " wins!" : "Draw!";
           document.getElementById("setupMenu").style.display = "block";
-          document.getElementById("toggleMenuBtn").innerText = "⚙️ Menü ausblenden";
+          document.getElementById("toggleMenuBtn").innerText = "⚙️";
         }
 
         activePokemons.forEach(pokemon => {
