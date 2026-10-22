@@ -298,6 +298,14 @@
     let lastTime = 0;
     let eliminationOrder = [];
 
+    // Event System Variablen
+    let top10EventTriggered = false;
+    let currentArenaBorderColor = "#ffcb05";
+    let globalDamageMultiplier = 1.0;
+    let hazardObjects = [];
+    let hazardSpawnTimer = 0;
+    let waterRiseHeight = 0; // Für Primordial Sea
+
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
     // ==========================================
@@ -314,6 +322,8 @@
       leech_seed: "#2ed573",
       berserker: "#8b0000"
     };
+
+    const possibleTypes = ["burn", "blitz", "slow_feld", "crit", "curse_dot", "aoe_slam", "snipe_shot", "scorch", "barrier", "leech_seed", "berserker"];
 
     const pokemonTemplates = [
       { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "burn", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
@@ -338,7 +348,7 @@
       { name: "Silvarro",       color: "#009432", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
       { name: "Curelei",        color: "#ff9ff3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
       { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.1, attackRange: 150, type: "slow_feld", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
-      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/823.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.9, attackRange: 150, type: "aoe_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
       { name: "Lauchzelot",     color: "#f8c291", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "crit", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
       { name: "Olangaar",       color: "#8395a7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "barrier", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "snipe_shot", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
@@ -384,7 +394,83 @@
     }
 
     // ==========================================
-    // 4. KLASSEN (POKEMON & PROJEKTIL)
+    // 4. TOP 10 EVENT SYSTEM LOGIK
+    // ==========================================
+    let activeEventName = null;
+    let eventTimer = 0; // Für zeitbasierte Event-Phasen (z.B. Unverwendbarkeit / Einfrieren)
+
+    function triggerTop10Event() {
+      top10EventTriggered = true;
+      const roll = Math.random() * 100;
+      
+      if (roll < 50) {
+        // Event 1: Classic (50%)
+        activeEventName = "Classic";
+        currentArenaBorderColor = "#ffcb05";
+        document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
+      } else if (roll < 60) {
+        // Event 2: Grassy Surge (10%)
+        activeEventName = "Grassy Surge";
+        currentArenaBorderColor = "#2ed573";
+        document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
+        visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.4)" });
+        
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.hp = Math.min(p.maxHp, p.hp + 200);
+            // Debuffs entfernen (ausgenommen Berserker)
+            p.dots = [];
+            p.isSlowed = false;
+            p.aoeDebuff = false;
+            p.curseStacks = 0;
+          }
+        });
+      } else if (roll < 70) {
+        // Event 3: Harsh Sunlight (10%)
+        activeEventName = "Harsh Sunlight";
+        currentArenaBorderColor = "#ff4757";
+        document.getElementById("winnerAnnounce").innerText = "☀️ Harsh Sunlight Event!";
+        eventTimer = 10.0; // 10 Sekunden unverwendbar
+      } else if (roll < 80) {
+        // Event 4: Trick Room (10%)
+        activeEventName = "Trick Room";
+        currentArenaBorderColor = "#ff9ff3";
+        document.getElementById("winnerAnnounce").innerText = "🌀 Trick Room Event!";
+        
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.4; // 60% langsamer (behielt 40%)
+          }
+        });
+
+        // Fähigkeiten zufällig neu verteilen unter den lebenden Pokémon
+        const aliveList = activePokemons.filter(p => p.hp > 0);
+        const typesPool = aliveList.map(p => p.type);
+        // Mische den Pool durch
+        typesPool.sort(() => Math.random() - 0.5);
+        
+        aliveList.forEach((p, idx) => {
+          p.type = typesPool[idx];
+          p.typeColor = typeColors[p.type] || p.color;
+        });
+      } else if (roll < 90) {
+        // Event 5: Hazard Storm (10%)
+        activeEventName = "Hazard Storm";
+        currentArenaBorderColor = "#d35400";
+        document.getElementById("winnerAnnounce").innerText = "🌪️ Hazard Storm Event!";
+        hazardSpawnTimer = 0;
+      } else {
+        // Event 6: Primordial Sea (10%)
+        activeEventName = "Primordial Sea";
+        currentArenaBorderColor = "#2980b9";
+        document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
+        eventTimer = 10.0; // 10 Sekunden eingefroren
+        waterRiseHeight = 0;
+      }
+    }
+
+    // ==========================================
+    // 5. KLASSEN (POKEMON & PROJEKTIL)
     // ==========================================
     class Pokemon {
       constructor(template, id) {
@@ -448,6 +534,15 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
+        // Event 3: Harsh Sunlight (erste 10 Sekunden unbeweglich/unverwendbar)
+        if (activeEventName === "Harsh Sunlight" && eventTimer > 0) {
+          return; 
+        }
+
+        // Event 6: Primordial Sea (erste 10 Sekunden eingefroren)
+        if (activeEventName === "Primordial Sea" && eventTimer > 0) {
+          return; 
+        }
         
         if (this.type === "berserker") {
           if (!this.berserkerTriggered && this.hp <= 100) {
@@ -490,7 +585,7 @@
                 if (Math.hypot(other.x - orb.x, other.y - orb.y) <= other.radius + orbRadius) {
                   const currentCd = this.orbHitCooldowns.get(other.id) || 0;
                   if (currentCd <= 0) {
-                    const baseDmg = Math.max(3, this.attack * 1.0);
+                    const baseDmg = Math.max(3, this.attack * 1.0 * globalDamageMultiplier);
                     other.takeDamage(baseDmg, this.id);
 
                     let kx = other.x - this.x;
@@ -619,12 +714,23 @@
           }
         }
 
-        // Wand-Kollision
+        // Wand-Kollision & Wasserstand-Prüfung (Primordial Sea)
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
         const currentAngle = Math.atan2(dy, dx);
         const maxRadius = getWavyRadius(currentAngle);
+
+        // Primordial Sea Wasserstand-Check: Y-Koordinate relativ zum Canvas-Zentrum im unteren Bereich
+        if (activeEventName === "Primordial Sea" && eventTimer <= 0) {
+          // Wasser steigt von unten nach oben (Y wächst nach unten)
+          const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
+          if (this.y >= waterLineY) {
+            this.hp = 0;
+            eliminationOrder.push(this);
+            return;
+          }
+        }
 
         if (distanceToCenter + this.radius > maxRadius) {
           const deltaA = 0.01;
@@ -662,7 +768,7 @@
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
             if (this.berserkerActive) {
-              effectiveAttackSpeed /= 2.0; // 
+              effectiveAttackSpeed /= 2.0; 
             }
             this.attackCooldown = effectiveAttackSpeed;
           }
@@ -686,7 +792,7 @@
 
       triggerAoeSlam() {
         const slamRadius = 170;
-        let baseDmg = Math.max(3, this.attack) * 1.0;
+        let baseDmg = Math.max(3, this.attack) * 1.0 * globalDamageMultiplier;
         if (this.aoeDebuff) baseDmg *= 0.70;
 
         visualEffects.push({ type: "circle_aoe", x: this.x, y: this.y, radius: slamRadius, timer: 0.5 });
@@ -699,7 +805,7 @@
       }
 
       attackEnemy(target) {
-        let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
+        let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2)) * globalDamageMultiplier;
         if (this.aoeDebuff) rawDmg *= 0.70;
 
         if (this.type === "snipe_shot") {
@@ -1030,6 +1136,16 @@
       waveFrequency = 6;
       wavePhase = 0;
 
+      // Event-System Reset
+      top10EventTriggered = false;
+      activeEventName = null;
+      currentArenaBorderColor = "#ffcb05";
+      globalDamageMultiplier = 1.0;
+      hazardObjects = [];
+      hazardSpawnTimer = 0;
+      waterRiseHeight = 0;
+      eventTimer = 0;
+
       spawnBumper();
 
       activePokemons = [];
@@ -1069,7 +1185,18 @@
       ctx.closePath();
       ctx.fillStyle = "#22222b";
       ctx.fill();
-      ctx.strokeStyle = "#ffcb05";
+
+      // Wenn Primordial Sea aktiv, zeichne steigenden Wasserstand im Arena-Bereich
+      if (activeEventName === "Primordial Sea" && eventTimer <= 0 && waterRiseHeight > 0) {
+        ctx.save();
+        ctx.clip(); // Clip auf die Arenagestalt
+        ctx.fillStyle = "rgba(41, 128, 185, 0.5)";
+        const waterY = centerY + initialArenaRadius - waterRiseHeight;
+        ctx.fillRect(centerX - initialArenaRadius, waterY, initialArenaRadius * 2, initialArenaRadius * 2);
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = currentArenaBorderColor;
       ctx.lineWidth = 4;
       ctx.stroke();
     }
@@ -1118,12 +1245,88 @@
           shrinkIntervalCount = intervalsPassed;
           applyShrinkAndReshape();
         }
+
+        // Timer herunterzählen für Event-Phasen (z.B. Harsh Sunlight oder Primordial Sea Startphasen)
+        if (eventTimer > 0) {
+          eventTimer -= deltaTime;
+          if (eventTimer <= 0) {
+            if (activeEventName === "Harsh Sunlight") {
+              globalDamageMultiplier = 1.20; // 20% Schadensbonus danach
+              document.getElementById("winnerAnnounce").innerText = "Sunlight Over: +20% Damage!";
+            } else if (activeEventName === "Primordial Sea") {
+              document.getElementById("winnerAnnounce").innerText = "Water Rising!";
+            }
+          }
+        }
+
+        // Primordial Sea Wasserstand steigen lassen
+        if (activeEventName === "Primordial Sea" && eventTimer <= 0) {
+          waterRiseHeight += deltaTime * 2.0; // Steigt langsam an
+        }
+
+        // Hazard Storm: Spawne periodisch Steine oder Beeren
+        if (activeEventName === "Hazard Storm") {
+          hazardSpawnTimer += deltaTime;
+          if (hazardSpawnTimer >= 4.0) {
+            hazardSpawnTimer = 0;
+            // Zufällige Position innerhalb der Arena
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * (arenaRadius - 30);
+            const hx = centerX + Math.cos(angle) * dist;
+            const hy = centerY + Math.sin(angle) * dist;
+            const isBerry = Math.random() < 0.5;
+            hazardObjects.push({ x: hx, y: hy, type: isBerry ? "berry" : "stone", radius: 10, timer: 10.0 });
+          }
+        }
+
+        // Top 10 Event Auslöser prüfen
+        const aliveCount = activePokemons.filter(p => p.hp > 0).length;
+        if (!top10EventTriggered && aliveCount <= 10 && aliveCount > 1) {
+          triggerTop10Event();
+        }
       }
 
       drawWavyArena();
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
+        // Hazard Objects verarbeiten und zeichnen
+        for (let i = hazardObjects.length - 1; i >= 0; i--) {
+          const h = hazardObjects[i];
+          h.timer -= deltaTime;
+          
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, h.radius, 0, Math.PI * 2);
+          ctx.fillStyle = h.type === "berry" ? "#2ed573" : "#718093";
+          ctx.fill();
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = "#fff";
+          ctx.font = "10px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(h.type === "berry" ? "🫐" : "🪨", h.x, h.y + 3);
+          ctx.restore();
+
+          // Kollision mit lebenden Pokémon prüfen
+          for (let p of activePokemons) {
+            if (p.hp > 0 && Math.hypot(p.x - h.x, p.y - h.y) <= p.radius + h.radius) {
+              if (h.type === "berry") {
+                p.hp = Math.min(p.maxHp, p.hp + 50);
+              } else {
+                p.takeDamage(40, null);
+              }
+              hazardObjects.splice(i, 1);
+              break;
+            }
+          }
+
+          if (i < hazardObjects.length && h.timer <= 0) {
+            hazardObjects.splice(i, 1);
+          }
+        }
+
         // Scorch Trails verarbeiten
         for (let i = scorchTrails.length - 1; i >= 0; i--) {
           const trail = scorchTrails[i];
@@ -1202,7 +1405,7 @@
           if (fx.type === "circle_aoe") {
             ctx.beginPath();
             ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(116, 125, 140, 0.5)";
+            ctx.fillStyle = fx.color || "rgba(116, 125, 140, 0.5)";
             ctx.fill();
           } else if (fx.type === "piercing_laser") {
             ctx.strokeStyle = "rgba(9, 132, 227, 0.8)";
