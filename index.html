@@ -355,7 +355,7 @@
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "dragon_dance", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
       { name: "Arceus",         color: "#c8d6e5", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "earthquake", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
       { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
-      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
       { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" }
     ];
 
@@ -478,14 +478,6 @@
         this.toxicStacks = [];
         this.bodySlamDebuff = false;
 
-      
-        get curseStacks() {
-        return this.toxicStacks.length;
-        }
-        set curseStacks(val) {
-        if (val === 0) this.toxicStacks = [];
-        }
-
         // Dragon Dance Variablen
         this.dragonDanceActive = false;
         this.dragonDanceTimer = 0;
@@ -513,13 +505,20 @@
         this.vy = Math.sin(moveAngle) * this.baseSpeed;
       }
 
+      get curseStacks() {
+        return this.toxicStacks.length;
+      }
+      set curseStacks(val) {
+        if (val === 0) this.toxicStacks = [];
+      }
+
       applyDoT(type, duration, dps, attackerId = null) {
         const aliveList = activePokemons.filter(p => p.hp > 0);
         if (aliveList.length === 1 && aliveList[0] === this) return;
 
         if (type === "toxic") {
-        this.toxicStacks.push({ attackerId }); // Verursacher des Stacks speichern
-        return;
+          this.toxicStacks.push({ attackerId });
+          return;
         }
         this.dots.push({ type, duration, dps, attackerId });
       }
@@ -639,11 +638,11 @@
           });
         }
 
-        // Status-Effekte (Toxic mit 2 Schaden pro Stack pro Sekunde)
+        // Status-Effekte (Toxic mit 2 Schaden pro Stack pro Sekunde + Damage Ranking Zählung)
         if (this.toxicStacks.length > 0) {
-        this.toxicStacks.forEach(stack => {
-        this.takeDamage(2 * deltaTime, stack.attackerId);
-        });
+          this.toxicStacks.forEach(stack => {
+            this.takeDamage(2 * deltaTime, stack.attackerId);
+          });
         }
 
         for (let i = this.dots.length - 1; i >= 0; i--) {
@@ -716,7 +715,7 @@
                 y: this.y,
                 radius: 10,
                 maxRadius: initialArenaRadius * 1.5,
-                speed: 50, // Langsamer
+                speed: 50,
                 damage: 25,
                 ownerId: this.id
               });
@@ -903,7 +902,7 @@
           const energyPercent = Math.min(1, this.energyPoints / 2);
           ctx.fillStyle = "#222222";
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
-          ctx.fillStyle = "#a8e6cf"; // Lime-Grün
+          ctx.fillStyle = "#bde168"; // Lime-Grün
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth * energyPercent, 3);
           ctx.strokeStyle = "#000000";
           ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
@@ -980,7 +979,7 @@
           if (this.isDragonDance) {
             const shooter = activePokemons.find(p => p.id === this.shooterId);
             if (shooter && shooter.hp > 0) {
-              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25); //DRAGON DANCE LIFE STEAL HIER!!!!!!!!!!!!!!
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25);
             }
           }
 
@@ -1321,7 +1320,7 @@
           if (seedHit) leechSeeds.splice(i, 1);
         }
 
-        // Bulk Up Schockwellen animieren (deutlich erkennbar & langsam über gesamte Arena)
+        // Bulk Up Schockwellen animieren
         for (let i = bulkUpWaves.length - 1; i >= 0; i--) {
           const wave = bulkUpWaves[i];
           wave.radius += wave.speed * deltaTime * speedMultiplier;
