@@ -475,8 +475,16 @@
         this.isSlowed = false;
 
         this.dots = [];
-        this.curseStacks = 0;
+        this.toxicStacks = [];
         this.bodySlamDebuff = false;
+
+      
+        get curseStacks() {
+        return this.toxicStacks.length;
+        }
+        set curseStacks(val) {
+        if (val === 0) this.toxicStacks = [];
+        }
 
         // Dragon Dance Variablen
         this.dragonDanceActive = false;
@@ -510,8 +518,8 @@
         if (aliveList.length === 1 && aliveList[0] === this) return;
 
         if (type === "toxic") {
-          this.curseStacks++;
-          return;
+        this.toxicStacks.push({ attackerId }); // Verursacher des Stacks speichern
+        return;
         }
         this.dots.push({ type, duration, dps, attackerId });
       }
@@ -632,9 +640,10 @@
         }
 
         // Status-Effekte (Toxic mit 2 Schaden pro Stack pro Sekunde)
-        if (this.curseStacks > 0) {
-          let toxicDps = this.curseStacks * 2;
-          this.takeDamage(toxicDps * deltaTime, null);
+        if (this.toxicStacks.length > 0) {
+        this.toxicStacks.forEach(stack => {
+        this.takeDamage(2 * deltaTime, stack.attackerId);
+        });
         }
 
         for (let i = this.dots.length - 1; i >= 0; i--) {
