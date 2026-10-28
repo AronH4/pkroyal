@@ -509,8 +509,9 @@
         this.dragonDanceTimer = 0;
         this.dragonDanceTriggered = false;
 
-        // Bulk Up Energie-Zähler
+        // Bulk Up Energie-Zähler & Cooldown-Sicherung
         this.energyPoints = 0;
+        this.canTriggerWave = true;
 
         this.orbAngle = Math.random() * Math.PI * 2;
         this.orbHitCooldowns = new Map();
@@ -552,7 +553,7 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        // Dragon Dance (ex-Berserker) Logik
+        // Dragon Dance Logik
         if (this.type === "dragon_dance") {
           if (!this.dragonDanceTriggered && this.hp <= 100) {
             this.dragonDanceTriggered = true;
@@ -573,7 +574,7 @@
         }
         this.isSlowed = false;
 
-        // Reflect (ex-Barrier) Logik
+        // Reflect Logik
         if (this.type === "reflect") {
           this.orbAngle += 1.8 * deltaTime; 
           const orbDist = this.radius + 20;
@@ -632,7 +633,7 @@
           }
         }
 
-        // Blizzard (ex-Slow Feld) Logik
+        // Blizzard Logik
         activePokemons.forEach(other => {
           if (other.type === "blizzard" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
@@ -644,7 +645,7 @@
           }
         });
 
-        // Earthquake (ex-Scorch) Trail Logik
+        // Earthquake Trail Logik
         scorchTrails.forEach(trail => {
           if (trail.ownerId !== this.id) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
@@ -664,7 +665,7 @@
           });
         }
 
-        // Status-Effekte (Toxic mit 2 Schaden pro Stack pro Sekunde + Damage Ranking Zählung)
+        // Status-Effekte
         if (this.toxicStacks.length > 0) {
           this.toxicStacks.forEach(stack => {
             this.takeDamage(2 * deltaTime, stack.attackerId);
@@ -681,7 +682,7 @@
           }
         }
 
-        // Wenn nur noch ein Pokémon übrig ist -> Zentrum der Arena bewegen & unverwundbar
+        // Bewegung
         const aliveListForCenter = activePokemons.filter(p => p.hp > 0);
         if (aliveListForCenter.length === 1 && aliveListForCenter[0] === this) {
           let distToCenter = Math.hypot(centerX - this.x, centerY - this.y);
@@ -732,18 +733,22 @@
 
         if (distanceToCenter + this.radius > maxRadius) {
           if (this.type === "bulk_up") {
-            this.energyPoints++;
-            if (this.energyPoints >= 2) {
-              this.energyPoints = 0;
-              bulkUpWaves.push({
-                x: this.x,
-                y: this.y,
-                radius: 10,
-                maxRadius: initialArenaRadius * 1.5,
-                speed: 50,
-                damage: 25,
-                ownerId: this.id
-              });
+            if (this.canTriggerWave) {
+              this.energyPoints++;
+              if (this.energyPoints >= 2) {
+                this.energyPoints = 0;
+                this.canTriggerWave = false; // Sperren, bis es wieder nach innen geht
+                bulkUpWaves.push({
+                  x: this.x,
+                  y: this.y,
+                  radius: 10,
+                  maxRadius: initialArenaRadius * 1.5,
+                  speed: 50,
+                  damage: 25,
+                  ownerId: this.id,
+                  hitPokemonIds: [] // Verhindert Mehrfachtreffer pro Welle
+                });
+              }
             }
           }
 
@@ -771,6 +776,11 @@
           const correctedRadius = maxRadius - this.radius - 1;
           this.x = centerX + Math.cos(currentAngle) * correctedRadius;
           this.y = centerY + Math.sin(currentAngle) * correctedRadius;
+        } else {
+          // Wieder im inneren Bereich -> Erlaube das Auslösen der nächsten Welle
+          if (this.type === "bulk_up") {
+            this.canTriggerWave = true;
+          }
         }
 
         if (this.attackCooldown > 0) {
@@ -1087,7 +1097,7 @@
         const abilityColor = typeColors[p.type] || p.color;
         const label = document.createElement("label");
         label.className = "pokemon-option";
-        label.title = p.name; // Tooltip bei Hover
+        label.title = p.name;
         label.style.borderColor = abilityColor;
         label.innerHTML = `
           <input type="checkbox" value="${idx}" style="accent-color: ${abilityColor};" checked>
@@ -1361,9 +1371,14 @@
 
           activePokemons.forEach(p => {
             if (p.id !== wave.ownerId && p.hp > 0) {
+              // Prüfen, ob das Pokémon bereits von dieser spezifischen Welle getroffen wurde
+              if (wave.hitPokemonIds && wave.hitPokemonIds.includes(p.id)) return;
+
               const d = Math.hypot(p.x - wave.x, p.y - wave.y);
               if (Math.abs(d - wave.radius) < 15) {
                 p.takeDamage(wave.damage, wave.ownerId);
+                if (!wave.hitPokemonIds) wave.hitPokemonIds = [];
+                wave.hitPokemonIds.push(p.id);
               }
             }
           });
