@@ -349,12 +349,12 @@
       { name: "Silvarro",       color: "#009432", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
       { name: "Curelei",        color: "#ff9ff3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
       { name: "Alola-Sandamer", color: "#48dbfb", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.1, attackRange: 150, type: "blizzard", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
-      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/823.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/823.png" },
       { name: "Lauchzelot",     color: "#f8c291", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "sucker_punch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
       { name: "Olangaar",       color: "#8395a7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "reflect", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "dragon_dance", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
       { name: "Arceus",         color: "#c8d6e5", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "earthquake", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
-      { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
+      { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
       { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
       { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" }
     ];
@@ -506,7 +506,6 @@
       }
 
       applyDoT(type, duration, dps, attackerId = null) {
-        // Letztes verbleibendes Pokémon ist immun gegen DoTs
         const aliveList = activePokemons.filter(p => p.hp > 0);
         if (aliveList.length === 1 && aliveList[0] === this) return;
 
@@ -632,7 +631,7 @@
           });
         }
 
-        // Status-Effekte (inkl. Toxic mit 2 Schaden pro Stack pro Sekunde) abarbeiten
+        // Status-Effekte (Toxic mit 2 Schaden pro Stack pro Sekunde)
         if (this.curseStacks > 0) {
           let toxicDps = this.curseStacks * 2;
           this.takeDamage(toxicDps * deltaTime, null);
@@ -648,7 +647,7 @@
           }
         }
 
-        // Wenn nur noch ein Pokémon übrig ist, bewege es in die Arena-Mitte
+        // Wenn nur noch ein Pokémon übrig ist -> Zentrum der Arena bewegen & unverwundbar
         const aliveListForCenter = activePokemons.filter(p => p.hp > 0);
         if (aliveListForCenter.length === 1 && aliveListForCenter[0] === this) {
           let distToCenter = Math.hypot(centerX - this.x, centerY - this.y);
@@ -658,7 +657,6 @@
             this.y += Math.sin(angleToCenter) * Math.min(distToCenter, effectiveSpeed * speedMultiplier);
           }
         } else {
-          // Normale Bewegung ausführen
           const currentVx = (this.vx / this.baseSpeed) * effectiveSpeed * speedMultiplier;
           const currentVy = (this.vy / this.baseSpeed) * effectiveSpeed * speedMultiplier;
           this.x += currentVx;
@@ -699,7 +697,7 @@
         }
 
         if (distanceToCenter + this.radius > maxRadius) {
-          // Bulk Up Wand-Berührung: Zählt Energiepunkt, bei 2 Punkten Schockwelle auslösen
+          // Bulk Up Wand-Berührung: Zählt Energiepunkt, bei 2 Punkten langsame Schockwelle über die gesamte Arena auslösen
           if (this.type === "bulk_up") {
             this.energyPoints++;
             if (this.energyPoints >= 2) {
@@ -709,7 +707,7 @@
                 y: this.y,
                 radius: 10,
                 maxRadius: initialArenaRadius * 1.5,
-                speed: 300,
+                speed: 100, // Langsamer
                 damage: 25,
                 ownerId: this.id
               });
@@ -867,10 +865,11 @@
           ctx.fill();
         }
 
+        // Toxic Icon (alter Totenkopf in lila)
         if (this.curseStacks > 0) {
           ctx.fillStyle = "#a29bfe";
           ctx.font = "bold 11px Arial";
-          ctx.fillText("☣️" + this.curseStacks, this.x + 18, this.y - 5);
+          ctx.fillText("💀" + this.curseStacks, this.x + 18, this.y - 5);
         }
 
         ctx.fillStyle = "#ffffff";
@@ -882,7 +881,6 @@
         const barHeight = 5;
         const hpPercent = this.hp / this.maxHp;
 
-        // Lebensleiste
         ctx.fillStyle = "#cc0000";
         ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
         ctx.fillStyle = "#00ff66";
@@ -891,7 +889,7 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
-        // Zusatzleiste für Energiepunkte bei Bulk Up
+        // Zusatzleiste für Bulk Up Energiepunkte
         if (this.type === "bulk_up") {
           const energyPercent = Math.min(1, this.energyPoints / 2);
           ctx.fillStyle = "#222222";
@@ -980,13 +978,15 @@
           if (this.specialType === "flamethrower") this.target.applyDoT("flamethrower", 7.5, 5, this.shooterId);
           if (this.specialType === "toxic") this.target.applyDoT("toxic", 0, 0, this.shooterId);
           
-          // Body Slam: Kleiner AoE-Kreis um das Ziel herum beim Auto-Attack-Treffer + Reduktions-Debuff
+          // Body Slam: Kleiner AoE-Kreis um das Ziel herum nach jedem Auto-Attack (Immunität für Body-Slam-User)
           if (this.specialType === "body_slam") {
-            this.target.bodySlamDebuff = true;
+            if (this.target.type !== "body_slam") {
+              this.target.bodySlamDebuff = true;
+            }
             const smallAoeRadius = 35;
             visualEffects.push({ type: "circle_aoe", x: this.target.x, y: this.target.y, radius: smallAoeRadius, timer: 0.3, color: "rgba(116, 125, 140, 0.4)" });
             activePokemons.forEach(p => {
-              if (p.hp > 0 && Math.hypot(p.x - this.target.x, p.y - this.target.y) <= smallAoeRadius) {
+              if (p.hp > 0 && p.type !== "body_slam" && Math.hypot(p.x - this.target.x, p.y - this.target.y) <= smallAoeRadius) {
                 p.bodySlamDebuff = true;
                 if (p !== this.target) {
                   p.takeDamage(finalDmg * 0.5, this.shooterId);
@@ -1312,21 +1312,25 @@
           if (seedHit) leechSeeds.splice(i, 1);
         }
 
-        // Bulk Up Schockwellen animieren
+        // Bulk Up Schockwellen animieren (deutlich erkennbar & langsam über gesamte Arena)
         for (let i = bulkUpWaves.length - 1; i >= 0; i--) {
           const wave = bulkUpWaves[i];
           wave.radius += wave.speed * deltaTime * speedMultiplier;
           
+          ctx.save();
           ctx.beginPath();
           ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(168, 230, 207, ${Math.max(0, 1 - wave.radius / wave.maxRadius)})`;
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 5;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = "#a8e6cf";
           ctx.stroke();
+          ctx.restore();
 
           activePokemons.forEach(p => {
             if (p.id !== wave.ownerId && p.hp > 0) {
               const d = Math.hypot(p.x - wave.x, p.y - wave.y);
-              if (Math.abs(d - wave.radius) < 12) {
+              if (Math.abs(d - wave.radius) < 15) {
                 p.takeDamage(wave.damage, wave.ownerId);
               }
             }
