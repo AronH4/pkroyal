@@ -312,18 +312,18 @@
     // 2. DATENBANK & TYPEN-FARBEN
     // ==========================================
     const typeColors = {
-      flamethrower: "#ff4757",        
-      thunderbolt: "#feca57",       
+      flamethrower: "#ea4335",        
+      thunderbolt: "#ffd432",       
       blizzard: "#48dbfb",   
       sucker_punch: "#ffffff",        
-      toxic: "#a29bfe",   
-      body_slam: "#747d8c",    
+      toxic: "#9683d9",   
+      body_slam: "#c1baba",    
       long_reach: "#0984e3",  
-      earthquake: "#ff7f50",      
+      earthquake: "#ff7a18",      
       reflect: "#ff9ff3",     
-      leech_seed: "#2ed573",
+      leech_seed: "#23d46c",
       dragon_dance: "#8b0000",
-      bulk_up: "#a8e6cf" // Sehr helles Gelbgrün (Lime)
+      bulk_up: "#bde168" // Sehr helles Gelbgrün (Lime)
     };
 
     const pokemonTemplates = [
@@ -355,7 +355,7 @@
       { name: "Katapuldra",     color: "#00d2d3", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "dragon_dance", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
       { name: "Arceus",         color: "#c8d6e5", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "earthquake", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
       { name: "Pamomamo",       color: "#feca57", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
-      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Saltigant",      color: "#ee5253", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
       { name: "Eisenbündel",    color: "#54a0ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" }
     ];
 
@@ -604,9 +604,9 @@
           if (other.type === "blizzard" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
             if (dist <= 160) {
-              effectiveSpeed *= 0.35;
+              effectiveSpeed *= 0.40;
               this.isSlowed = true;
-              this.takeDamage(2.9 * deltaTime, other.id);
+              this.takeDamage(3 * deltaTime, other.id);
             }
           }
         });
@@ -626,7 +626,7 @@
             x: this.x,
             y: this.y,
             radius: 20,
-            timer: 4.5,
+            timer: 6.0,
             ownerId: this.id
           });
         }
@@ -707,7 +707,7 @@
                 y: this.y,
                 radius: 10,
                 maxRadius: initialArenaRadius * 1.5,
-                speed: 100, // Langsamer
+                speed: 50, // Langsamer
                 damage: 25,
                 ownerId: this.id
               });
@@ -971,11 +971,11 @@
           if (this.isDragonDance) {
             const shooter = activePokemons.find(p => p.id === this.shooterId);
             if (shooter && shooter.hp > 0) {
-              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25);
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25); //DRAGON DANCE LIFE STEAL HIER!!!!!!!!!!!!!!
             }
           }
 
-          if (this.specialType === "flamethrower") this.target.applyDoT("flamethrower", 7.5, 5, this.shooterId);
+          if (this.specialType === "flamethrower") this.target.applyDoT("flamethrower", 7, 5, this.shooterId);
           if (this.specialType === "toxic") this.target.applyDoT("toxic", 0, 0, this.shooterId);
           
           // Body Slam: Kleiner AoE-Kreis um das Ziel herum nach jedem Auto-Attack (Immunität für Body-Slam-User)
@@ -983,13 +983,13 @@
             if (this.target.type !== "body_slam") {
               this.target.bodySlamDebuff = true;
             }
-            const smallAoeRadius = 35;
+            const smallAoeRadius = 50;
             visualEffects.push({ type: "circle_aoe", x: this.target.x, y: this.target.y, radius: smallAoeRadius, timer: 0.3, color: "rgba(116, 125, 140, 0.4)" });
             activePokemons.forEach(p => {
               if (p.hp > 0 && p.type !== "body_slam" && Math.hypot(p.x - this.target.x, p.y - this.target.y) <= smallAoeRadius) {
                 p.bodySlamDebuff = true;
                 if (p !== this.target) {
-                  p.takeDamage(finalDmg * 0.5, this.shooterId);
+                  p.takeDamage(finalDmg * 1, this.shooterId);
                 }
               }
             });
