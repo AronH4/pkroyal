@@ -68,32 +68,58 @@
       transition: all 0.3s ease;
     }
 
+    /* Kompaktes Grid ohne Scrollen, Icons eng beieinander */
     .pokemon-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
       margin-top: 10px;
       margin-bottom: 15px;
-      max-height: 260px;
-      overflow-y: auto;
-      padding-right: 5px;
+      max-height: none;
+      padding-right: 0;
     }
 
+    /* Pokémon-Optionen als Icon-Kacheln */
     .pokemon-option {
+      position: relative;
       display: flex;
       align-items: center;
+      justify-content: center;
       background: #1e1e24;
-      padding: 6px 12px;
-      border-radius: 6px;
+      padding: 4px;
+      border-radius: 8px;
+      border: 2px solid #555; /* Fallback-Rahmen */
       cursor: pointer;
       user-select: none;
-      font-size: 14px;
+      opacity: 0.4; /* Unausgewählt etwas abgedunkelt */
+      transition: all 0.2s ease;
     }
 
+    /* Wenn die Checkbox aktiv ist, volle Opazität */
+    .pokemon-option:has(input:checked) {
+      opacity: 1.0;
+      background: #2b2b36;
+      box-shadow: 0 0 8px rgba(0,0,0,0.6);
+    }
+
+    /* Checkbox oben rechts auf dem Kachel-Icon */
     .pokemon-option input {
-      margin-right: 10px;
-      transform: scale(1.2);
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      margin: 0;
+      transform: scale(0.85);
       cursor: pointer;
+      z-index: 2;
+    }
+
+    /* Bildgröße im Menü */
+    .pokemon-option img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      display: block;
     }
 
     .button-group {
@@ -246,7 +272,7 @@
   </div>
 
   <div id="setupMenu">
-    <div style="font-weight: bold; text-align: center;">Pokemon Auswählen</div>
+    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Pokémon Auswählen</div>
     <div class="pokemon-grid" id="pokemonSelectionList"></div>
     <div class="button-group">
       <button class="secondary" onclick="selectAll(true)">All</button>
@@ -294,7 +320,7 @@
     let visualEffects = [];
     let scorchTrails = [];
     let leechSeeds = [];
-    let bulkUpWaves = []; // Für Bulk Up Schockwellen
+    let bulkUpWaves = []; 
     let matchStarted = false;
     let gameOver = false;
     let lastTime = 0;
@@ -323,7 +349,7 @@
       reflect: "#ff9ff3",     
       leech_seed: "#23d46c",
       dragon_dance: "#8b0000",
-      bulk_up: "#bde168" // Sehr helles Gelbgrün (Lime)
+      bulk_up: "#bde168"
     };
 
     const pokemonTemplates = [
@@ -705,7 +731,6 @@
         }
 
         if (distanceToCenter + this.radius > maxRadius) {
-          // Bulk Up Wand-Berührung: Zählt Energiepunkt, bei 2 Punkten langsame Schockwelle über die gesamte Arena auslösen
           if (this.type === "bulk_up") {
             this.energyPoints++;
             if (this.energyPoints >= 2) {
@@ -810,7 +835,6 @@
       takeDamage(amount, attackerId = null) {
         if (amount <= 0 || this.hp <= 0) return;
 
-        // Unverwundbarkeit für das letzte verbleibende Pokémon
         const aliveList = activePokemons.filter(p => p.hp > 0);
         if (aliveList.length === 1 && aliveList[0] === this) {
           return; 
@@ -873,7 +897,6 @@
           ctx.fill();
         }
 
-        // Toxic Icon (alter Totenkopf in lila)
         if (this.curseStacks > 0) {
           ctx.fillStyle = "#a29bfe";
           ctx.font = "bold 11px Arial";
@@ -897,12 +920,11 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
-        // Zusatzleiste für Bulk Up Energiepunkte
         if (this.type === "bulk_up") {
           const energyPercent = Math.min(1, this.energyPoints / 2);
           ctx.fillStyle = "#222222";
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
-          ctx.fillStyle = "#bde168"; // Lime-Grün
+          ctx.fillStyle = "#bde168"; 
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth * energyPercent, 3);
           ctx.strokeStyle = "#000000";
           ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
@@ -986,7 +1008,6 @@
           if (this.specialType === "flamethrower") this.target.applyDoT("flamethrower", 7, 5, this.shooterId);
           if (this.specialType === "toxic") this.target.applyDoT("toxic", 0, 0, this.shooterId);
           
-          // Body Slam: Kleiner AoE-Kreis um das Ziel herum nach jedem Auto-Attack (Immunität für Body-Slam-User)
           if (this.specialType === "body_slam") {
             if (this.target.type !== "body_slam") {
               this.target.bodySlamDebuff = true;
@@ -1063,9 +1084,15 @@
       const container = document.getElementById("pokemonSelectionList");
       container.innerHTML = "";
       pokemonTemplates.forEach((p, idx) => {
+        const abilityColor = typeColors[p.type] || p.color;
         const label = document.createElement("label");
         label.className = "pokemon-option";
-        label.innerHTML = `<input type="checkbox" value="${idx}" checked> ${p.name}`;
+        label.title = p.name; // Tooltip bei Hover
+        label.style.borderColor = abilityColor;
+        label.innerHTML = `
+          <input type="checkbox" value="${idx}" style="accent-color: ${abilityColor};" checked>
+          <img src="${p.img}" alt="${p.name}">
+        `;
         container.appendChild(label);
       });
     }
@@ -1270,7 +1297,6 @@
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
-        // Scorch Trails verarbeiten
         for (let i = scorchTrails.length - 1; i >= 0; i--) {
           const trail = scorchTrails[i];
           trail.timer -= deltaTime;
@@ -1281,7 +1307,6 @@
           if (trail.timer <= 0) scorchTrails.splice(i, 1);
         }
 
-        // Leech Seeds verarbeiten
         for (let i = leechSeeds.length - 1; i >= 0; i--) {
           const seed = leechSeeds[i];
           ctx.save();
@@ -1320,7 +1345,6 @@
           if (seedHit) leechSeeds.splice(i, 1);
         }
 
-        // Bulk Up Schockwellen animieren
         for (let i = bulkUpWaves.length - 1; i >= 0; i--) {
           const wave = bulkUpWaves[i];
           wave.radius += wave.speed * deltaTime * speedMultiplier;
