@@ -56,7 +56,7 @@
     }
 
     #setupMenu {
-      display: none; /* Initial ausgeblendet, lässt sich per Zahnrad öffnen */
+      display: none;
       background-color: #2b2b36;
       border: 2px solid #2a75bb;
       border-radius: 12px;
@@ -68,7 +68,6 @@
       transition: all 0.3s ease;
     }
 
-    /* Kompaktes Grid ohne Scrollen, Icons eng beieinander */
     .pokemon-grid {
       display: flex;
       flex-wrap: wrap;
@@ -80,7 +79,6 @@
       padding-right: 0;
     }
 
-    /* Pokémon-Optionen als Icon-Kacheln */
     .pokemon-option {
       position: relative;
       display: flex;
@@ -89,21 +87,19 @@
       background: #1e1e24;
       padding: 4px;
       border-radius: 8px;
-      border: 2px solid #555; /* Fallback-Rahmen */
+      border: 2px solid #555;
       cursor: pointer;
       user-select: none;
-      opacity: 0.4; /* Unausgewählt etwas abgedunkelt */
+      opacity: 0.4;
       transition: all 0.2s ease;
     }
 
-    /* Wenn die Checkbox aktiv ist, volle Opazität */
     .pokemon-option:has(input:checked) {
       opacity: 1.0;
       background: #2b2b36;
       box-shadow: 0 0 8px rgba(0,0,0,0.6);
     }
 
-    /* Checkbox oben rechts auf dem Kachel-Icon */
     .pokemon-option input {
       position: absolute;
       top: 2px;
@@ -114,7 +110,6 @@
       z-index: 2;
     }
 
-    /* Bildgröße im Menü */
     .pokemon-option img {
       width: 42px;
       height: 42px;
@@ -156,14 +151,24 @@
       background-color: #4a4a5a;
     }
 
+    .main-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      width: 100%;
+      max-width: 1250px;
+    }
+
     .main-container {
       display: flex;
       gap: 20px;
       align-items: flex-start;
       justify-content: center;
+      width: 100%;
     }
 
-    canvas {
+    canvas#arenaCanvas {
       background-color: #2b2b36;
       border: 5px solid #ffcb05;
       border-radius: 50%;
@@ -254,6 +259,42 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+
+    .bottom-charts-container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .chart-box {
+      background-color: #2b2b36;
+      border: 2px solid #2a75bb;
+      border-radius: 12px;
+      padding: 15px;
+      width: calc(50% - 10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .chart-box h3 {
+      margin-top: 0;
+      text-align: center;
+      color: #ffcb05;
+      border-bottom: 1px solid #2a75bb;
+      padding-bottom: 8px;
+      width: 100%;
+    }
+
+    .chart-canvas {
+      background-color: #1e1e24;
+      border-radius: 8px;
+      width: 100%;
+      height: 220px;
+    }
   </style>
 </head>
 <body>
@@ -262,6 +303,7 @@
   <div id="winnerAnnounce">Get Ready!</div>
 
   <div id="topControls">
+    <button class="secondary" onclick="resetStats()" title="Statistiken zurücksetzen">🗑️ Reset</button>
     <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
     <div class="speed-control">
       <span>Speed:</span>
@@ -280,17 +322,30 @@
     </div>
   </div>
 
-  <div class="main-container">
-    <div id="placementPanel" class="side-panel">
-      <h3>🏆 Placement</h3>
-      <div id="placementList"></div>
+  <div class="main-layout">
+    <div class="main-container">
+      <div id="placementPanel" class="side-panel">
+        <h3>🏆 Placement</h3>
+        <div id="placementList"></div>
+      </div>
+
+      <canvas id="arenaCanvas" width="750" height="750"></canvas>
+
+      <div id="leaderboard" class="side-panel">
+        <h3>📊 Damage Ranking</h3>
+        <div id="leaderboardList"></div>
+      </div>
     </div>
 
-    <canvas id="arenaCanvas" width="750" height="750"></canvas>
-
-    <div id="leaderboard" class="side-panel">
-      <h3>📊 Damage Ranking</h3>
-      <div id="leaderboardList"></div>
+    <div class="bottom-charts-container">
+      <div class="chart-box">
+        <h3>📈 Siege nach Ability-Gruppen</h3>
+        <canvas id="barChartCanvas" class="chart-canvas" width="600" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>🥧 Personenschnitt Schaden nach Gruppen</h3>
+        <canvas id="pieChartCanvas" class="chart-canvas" width="600" height="220"></canvas>
+      </div>
     </div>
   </div>
 
@@ -386,7 +441,190 @@
     ];
 
     // ==========================================
-    // 3. ARENA & BUMPER FUNKTIONEN
+    // 3. STATISTIKEN & PERSISTENZ (LOCALSTORAGE)
+    // ==========================================
+    function getStoredStats() {
+      let stats = localStorage.getItem("pk_royal_stats");
+      if (!stats) {
+        let initial = {};
+        Object.keys(typeColors).forEach(type => {
+          initial[type] = { wins: 0, totalDamage: 0, matchesPlayed: 0 };
+        });
+        localStorage.setItem("pk_royal_stats", JSON.stringify(initial));
+        return initial;
+      }
+      return JSON.parse(stats);
+    }
+
+    function saveStats(stats) {
+      localStorage.setItem("pk_royal_stats", JSON.stringify(stats));
+    }
+
+    function resetStats() {
+      if (confirm("Möchtest du wirklich alle Statistiken zurücksetzen?")) {
+        localStorage.removeItem("pk_royal_stats");
+        drawCharts();
+      }
+    }
+
+    function recordMatchResults(winner, allParticipants) {
+      let stats = getStoredStats();
+      
+      // Für die MatchesPlayed / Teilnahmen pro Gruppe erfassen
+      let participantsPerType = {};
+      allParticipants.forEach(p => {
+        if (!participantsPerType[p.type]) participantsPerType[p.type] = 0;
+        participantsPerType[p.type]++;
+        stats[p.type].totalDamage += p.totalDamageDealt;
+      });
+
+      Object.keys(participantsPerType.hasOwnProperty ? participantsPerType : {}).forEach(type => {
+        if (stats[type]) {
+          stats[type].matchesPlayed += participantsPerType[type];
+        }
+      });
+
+      // Nur Sieg werten, wenn es keinen Unentschieden gibt (Winner existiert)
+      if (winner) {
+        if (!stats[winner.type]) {
+          stats[winner.type] = { wins: 0, totalDamage: 0, matchesPlayed: 0 };
+        }
+        stats[winner.type].wins++;
+      }
+
+      saveStats(stats);
+      drawCharts();
+    }
+
+    // ==========================================
+    // 4. DIAGRAMM-RENDER-FUNKTIONEN
+    // ==========================================
+    function drawCharts() {
+      drawBarChart();
+      drawPieChart();
+    }
+
+    function drawBarChart() {
+      const bCanvas = document.getElementById("barChartCanvas");
+      const bCtx = bCanvas.getContext("2d");
+      bCtx.clearRect(0, 0, bCanvas.width, bCanvas.height);
+
+      let stats = getStoredStats();
+      let data = Object.keys(typeColors).map(type => {
+        let entry = stats[type] || { wins: 0, matchesPlayed: 0 };
+        let winRate = entry.matchesPlayed > 0 ? (entry.wins / entry.matchesPlayed) * 100 : 0;
+        return { type: type, wins: entry.wins, winRate: winRate, color: typeColors[type] };
+      });
+
+      // Absteigend sortieren nach Siege-Summe
+      data.sort((a, b) => b.wins - a.wins);
+
+      let maxWins = Math.max(...data.map(d => d.wins), 5);
+      let paddingLeft = 30;
+      let paddingBottom = 30;
+      let paddingTop = 25;
+      let chartWidth = bCanvas.width - paddingLeft - 20;
+      let chartHeight = bCanvas.height - paddingBottom - paddingTop;
+      let barWidth = chartWidth / data.length - 6;
+
+      // Y-Achsen Linien & Labels
+      bCtx.strokeStyle = "#3a3a4a";
+      bCtx.lineWidth = 1;
+      bCtx.fillStyle = "#aaa";
+      bCtx.font = "10px Arial";
+      for (let i = 0; i <= 4; i++) {
+        let val = Math.round((maxWins / 4) * i);
+        let y = paddingTop + chartHeight - (chartHeight / 4) * i;
+        bCtx.fillText(val, 5, y + 3);
+        bCtx.beginPath();
+        bCtx.moveTo(paddingLeft, y);
+        bCtx.lineTo(bCanvas.width - 10, y);
+        bCtx.stroke();
+      }
+
+      // Säulen zeichnen
+      data.forEach((d, idx) => {
+        let x = paddingLeft + idx * (chartWidth / data.length) + 3;
+        let h = maxWins > 0 ? (d.wins / maxWins) * chartHeight : 0;
+        let y = paddingTop + chartHeight - h;
+
+        bCtx.fillStyle = d.color;
+        bCtx.fillRect(x, y, barWidth, h);
+
+        // Win-Rate ganz klein über der Säule
+        bCtx.fillStyle = "#ffffff";
+        bCtx.font = "9px Arial";
+        bCtx.textAlign = "center";
+        bCtx.fillText(d.winRate.toFixed(0) + "%", x + barWidth / 2, y - 4);
+      });
+    }
+
+    function drawPieChart() {
+      const pCanvas = document.getElementById("pieChartCanvas");
+      const pCtx = pCanvas.getContext("2d");
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+
+      let stats = getStoredStats();
+      
+      // Personenschnitt: Gesamtsumme Schaden geteilt durch die Anzahl der Pokémon in dieser Gruppe (hier: matchesPlayed)
+      let chartData = [];
+      Object.keys(typeColors).forEach(type => {
+        let entry = stats[type] || { totalDamage: 0, matchesPlayed: 0 };
+        let personAvg = entry.matchesPlayed > 0 ? entry.totalDamage / entry.matchesPlayed : 0;
+        if (personAvg > 0) {
+          chartData.push({ type: type, value: personAvg, color: typeColors[type] });
+        }
+      });
+
+      // Sortiert nach Personenschnitt absteigend
+      chartData.sort((a, b) => b.value - a.value);
+
+      let totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
+
+      let centerXPie = 110;
+      let centerYPie = pCanvas.height / 2;
+      let radius = 80;
+
+      if (totalValue === 0) {
+        pCtx.fillStyle = "#777";
+        pCtx.font = "12px Arial";
+        pCtx.textAlign = "center";
+        pCtx.fillText("Noch keine Daten vorhanden", pCanvas.width / 2, pCanvas.height / 2);
+        return;
+      }
+
+      let currentAngle = -Math.PI / 2;
+      chartData.forEach(item => {
+        let sliceAngle = (item.value / totalValue) * Math.PI * 2;
+
+        pCtx.beginPath();
+        pCtx.moveTo(centerXPie, centerYPie);
+        pCtx.arc(centerXPie, centerYPie, radius, currentAngle, currentAngle + sliceAngle);
+        pCtx.closePath();
+        pCtx.fillStyle = item.color;
+        pCtx.fill();
+
+        currentAngle += sliceAngle;
+      });
+
+      // Legende auf der rechten Seite zeichnen
+      let legendX = 220;
+      let legendY = 25;
+      chartData.forEach((item, idx) => {
+        if (idx > 7) return; // Begrenzung für die Übersichtlichkeit
+        pCtx.fillStyle = item.color;
+        pCtx.fillRect(legendX, legendY + (idx * 22), 12, 12);
+
+        pCtx.fillStyle = "#ffffff";
+        pCtx.font = "11px Arial";
+        pCtx.textAlign = "left";
+        let labelText = `${item.type}: ${Math.round(item.value)}`;
+        pCtx.fillText(labelText, legendX + 18, legendY + (idx * 22) + 10);
+      });
+    }
+
+    // ==========================================
+    // 5. ARENA & BUMPER FUNKTIONEN
     // ==========================================
     function getWavyRadius(angle) {
       return arenaRadius + Math.sin(angle * waveFrequency + wavePhase) * waveAmplitude;
@@ -422,7 +660,7 @@
     }
 
     // ==========================================
-    // 4. TOP 10 EVENT SYSTEM LOGIK
+    // 6. TOP 10 EVENT SYSTEM LOGIK
     // ==========================================
     function triggerTop10Event() {
       top10EventTriggered = true;
@@ -478,7 +716,7 @@
     }
 
     // ==========================================
-    // 5. KLASSEN (POKEMON & PROJEKTIL)
+    // 7. KLASSEN (POKEMON & PROJEKTIL)
     // ==========================================
     class Pokemon {
       constructor(template, id) {
@@ -504,12 +742,10 @@
         this.toxicStacks = [];
         this.bodySlamDebuff = false;
 
-        // Dragon Dance Variablen
         this.dragonDanceActive = false;
         this.dragonDanceTimer = 0;
         this.dragonDanceTriggered = false;
 
-        // Bulk Up Energie-Zähler & Cooldown-Sicherung
         this.energyPoints = 0;
         this.canTriggerWave = true;
 
@@ -553,7 +789,6 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        // Dragon Dance Logik
         if (this.type === "dragon_dance") {
           if (!this.dragonDanceTriggered && this.hp <= 100) {
             this.dragonDanceTriggered = true;
@@ -574,7 +809,6 @@
         }
         this.isSlowed = false;
 
-        // Reflect Logik
         if (this.type === "reflect") {
           this.orbAngle += 1.8 * deltaTime; 
           const orbDist = this.radius + 20;
@@ -614,7 +848,6 @@
           });
         }
 
-        // Leech Seed Logik
         if (this.type === "leech_seed") {
           if (this.seedDropCooldown > 0) {
             this.seedDropCooldown -= deltaTime;
@@ -633,7 +866,6 @@
           }
         }
 
-        // Blizzard Logik
         activePokemons.forEach(other => {
           if (other.type === "blizzard" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
@@ -645,7 +877,6 @@
           }
         });
 
-        // Earthquake Trail Logik
         scorchTrails.forEach(trail => {
           if (trail.ownerId !== this.id) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
@@ -665,7 +896,6 @@
           });
         }
 
-        // Status-Effekte
         if (this.toxicStacks.length > 0) {
           this.toxicStacks.forEach(stack => {
             this.takeDamage(2 * deltaTime, stack.attackerId);
@@ -682,7 +912,6 @@
           }
         }
 
-        // Bewegung
         const aliveListForCenter = activePokemons.filter(p => p.hp > 0);
         if (aliveListForCenter.length === 1 && aliveListForCenter[0] === this) {
           let distToCenter = Math.hypot(centerX - this.x, centerY - this.y);
@@ -698,7 +927,6 @@
           this.y += currentVy;
         }
 
-        // Bumper-Kollision
         if (activeBumper && activeEventName !== "Primordial Sea") {
           const bDist = Math.hypot(this.x - activeBumper.x, this.y - activeBumper.y);
           if (bDist <= this.radius + activeBumper.radius) {
@@ -715,7 +943,6 @@
           }
         }
 
-        // Wand-Kollision & Bulk Up Logik
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
@@ -737,7 +964,7 @@
               this.energyPoints++;
               if (this.energyPoints >= 2) {
                 this.energyPoints = 0;
-                this.canTriggerWave = false; // Sperren, bis es wieder nach innen geht
+                this.canTriggerWave = false;
                 bulkUpWaves.push({
                   x: this.x,
                   y: this.y,
@@ -746,7 +973,7 @@
                   speed: 50,
                   damage: 25,
                   ownerId: this.id,
-                  hitPokemonIds: [] // Verhindert Mehrfachtreffer pro Welle
+                  hitPokemonIds: []
                 });
               }
             }
@@ -777,7 +1004,6 @@
           this.x = centerX + Math.cos(currentAngle) * correctedRadius;
           this.y = centerY + Math.sin(currentAngle) * correctedRadius;
         } else {
-          // Wieder im inneren Bereich -> Erlaube das Auslösen der nächsten Welle
           if (this.type === "bulk_up") {
             this.canTriggerWave = true;
           }
@@ -1066,7 +1292,7 @@
     }
 
     // ==========================================
-    // 6. HELFER & UI-STEUERUNG
+    // 8. HELFER & UI-STEUERUNG
     // ==========================================
     function distanceToSegment(p, v, w) {
       const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
@@ -1204,7 +1430,7 @@
     }
 
     // ==========================================
-    // 7. RENDER- & SPIEL-SCHLEIFE
+    // 9. RENDER- & SPIEL-SCHLEIFE
     // ==========================================
     function drawWavyArena() {
       ctx.beginPath();
@@ -1265,6 +1491,8 @@
       ctx.restore();
     }
 
+    let statsRecordedThisMatch = false;
+
     function gameLoop(timestamp) {
       if (!lastTime) lastTime = timestamp;
       const deltaTime = ((timestamp - lastTime) / 1000) * speedMultiplier;
@@ -1273,6 +1501,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (matchStarted && !gameOver) {
+        statsRecordedThisMatch = false;
         battleTime += deltaTime;
         const intervalsPassed = Math.floor(battleTime / 40);
         if (intervalsPassed > shrinkIntervalCount) {
@@ -1371,7 +1600,6 @@
 
           activePokemons.forEach(p => {
             if (p.id !== wave.ownerId && p.hp > 0) {
-              // Prüfen, ob das Pokémon bereits von dieser spezifischen Welle getroffen wurde
               if (wave.hitPokemonIds && wave.hitPokemonIds.includes(p.id)) return;
 
               const d = Math.hypot(p.x - wave.x, p.y - wave.y);
@@ -1392,7 +1620,13 @@
         if (alivePokemons.length <= 1 && !gameOver) {
           gameOver = true;
           const winnerAnnounce = document.getElementById("winnerAnnounce");
-          winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " gewinnt!" : "Unentschieden!";
+          let winner = alivePokemons.length === 1 ? alivePokemons[0] : null;
+          winnerAnnounce.innerText = winner ? "🏆 " + winner.name + " gewinnt!" : "Unentschieden!";
+
+          if (!statsRecordedThisMatch) {
+            statsRecordedThisMatch = true;
+            recordMatchResults(winner, activePokemons);
+          }
         }
 
         activePokemons.forEach(pokemon => {
@@ -1449,6 +1683,7 @@
 
     // Initialisierung starten
     buildSelectionMenu();
+    drawCharts();
     requestAnimationFrame(gameLoop);
   </script>
 
