@@ -56,7 +56,7 @@
     }
 
     #setupMenu {
-      display: none; /* Initial ausgeblendet, lässt sich per Zahnrad öffnen */
+      display: none;
       background-color: #2b2b36;
       border: 2px solid #2a75bb;
       border-radius: 12px;
@@ -68,7 +68,6 @@
       transition: all 0.3s ease;
     }
 
-    /* Kompaktes Grid ohne Scrollen, Icons eng beieinander */
     .pokemon-grid {
       display: flex;
       flex-wrap: wrap;
@@ -80,7 +79,6 @@
       padding-right: 0;
     }
 
-    /* Pokémon-Optionen als Icon-Kacheln */
     .pokemon-option {
       position: relative;
       display: flex;
@@ -89,21 +87,19 @@
       background: #1e1e24;
       padding: 4px;
       border-radius: 8px;
-      border: 2px solid #555; /* Fallback-Rahmen */
+      border: 2px solid #555;
       cursor: pointer;
       user-select: none;
-      opacity: 0.4; /* Unausgewählt etwas abgedunkelt */
+      opacity: 0.4;
       transition: all 0.2s ease;
     }
 
-    /* Wenn die Checkbox aktiv ist, volle Opazität */
     .pokemon-option:has(input:checked) {
       opacity: 1.0;
       background: #2b2b36;
       box-shadow: 0 0 8px rgba(0,0,0,0.6);
     }
 
-    /* Checkbox oben rechts auf dem Kachel-Icon */
     .pokemon-option input {
       position: absolute;
       top: 2px;
@@ -114,7 +110,6 @@
       z-index: 2;
     }
 
-    /* Bildgröße im Menü */
     .pokemon-option img {
       width: 42px;
       height: 42px;
@@ -320,7 +315,8 @@
     let visualEffects = [];
     let scorchTrails = [];
     let leechSeeds = [];
-    let bulkUpWaves = []; 
+    let bulkUpWaves = [];
+    let sandStormRocks = [];
     let matchStarted = false;
     let gameOver = false;
     let lastTime = 0;
@@ -333,6 +329,8 @@
     let waterRiseHeight = 0; 
     let grassySurgeTimer = 0; 
     let grassySurgeSecondHealDone = false;
+    let sandStormTimer = 0;
+    let doubleTeamCircles = [];
 
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
@@ -394,25 +392,50 @@
 
     function updateBumperPosition() {
       if (!activeBumper) return;
-      const r = getWavyRadius(activeBumper.angle) - 15;
-      activeBumper.x = centerX + Math.cos(activeBumper.angle) * r;
-      activeBumper.y = centerY + Math.sin(activeBumper.angle) * r;
+      if (activeEventName === "Double Team") {
+        const c = activeBumper.circle;
+        const r = c.r - 15;
+        activeBumper.x = c.x + Math.cos(activeBumper.angle) * r;
+        activeBumper.y = c.y + Math.sin(activeBumper.angle) * r;
+      } else {
+        const r = getWavyRadius(activeBumper.angle) - 15;
+        activeBumper.x = centerX + Math.cos(activeBumper.angle) * r;
+        activeBumper.y = centerY + Math.sin(activeBumper.angle) * r;
+      }
     }
 
     function spawnBumper() {
-      const angle = Math.random() * Math.PI * 2;
-      activeBumper = {
-        angle: angle,
-        radius: 18,
-        x: 0,
-        y: 0,
-        pulseTimer: 0
-      };
-      updateBumperPosition();
+      if (activeEventName === "Double Team") {
+        // Erstelle für jeden der 3 Kreise einen Bumper
+        doubleTeamCircles.forEach(c => {
+          const angle = Math.random() * Math.PI * 2;
+          c.bumper = {
+            circle: c,
+            angle: angle,
+            radius: 14,
+            x: 0,
+            y: 0,
+            pulseTimer: 0
+          };
+          const r = c.r - 15;
+          c.bumper.x = c.x + Math.cos(angle) * r;
+          c.bumper.y = c.y + Math.sin(angle) * r;
+        });
+      } else {
+        const angle = Math.random() * Math.PI * 2;
+        activeBumper = {
+          angle: angle,
+          radius: 18,
+          x: 0,
+          y: 0,
+          pulseTimer: 0
+        };
+        updateBumperPosition();
+      }
     }
 
     function applyShrinkAndReshape() {
-      if (activeEventName === "Primordial Sea") return;
+      if (activeEventName === "Primordial Sea" || activeEventName === "Double Team") return;
 
       arenaRadius *= 0.90;
       waveAmplitude = 6 + Math.random() * 8; 
@@ -428,11 +451,11 @@
       top10EventTriggered = true;
       const roll = Math.random() * 100;
       
-      if (roll < 55) {
+      if (roll < 40) {
         activeEventName = "Classic";
         currentArenaBorderColor = "#ffcb05";
         document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
-      } else if (roll < 70) {
+      } else if (roll < 55) {
         activeEventName = "Grassy Surge";
         currentArenaBorderColor = "#2ed573";
         document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
@@ -450,30 +473,46 @@
             p.curseStacks = 0;
           }
         });
-      } else if (roll < 85) {
+      } else if (roll < 70) {
         activeEventName = "Primordial Sea";
         currentArenaBorderColor = "#2980b9";
         document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
         waterRiseHeight = 0;
+      } else if (roll < 85) {
+        activeEventName = "Sand Storm";
+        currentArenaBorderColor = "#c2b280";
+        document.getElementById("winnerAnnounce").innerText = "沙 Sand Storm Event!";
+        sandStormTimer = 0;
+        sandStormRocks = [];
       } else {
-        activeEventName = "Trick Room";
-        currentArenaBorderColor = "#ff9ff3";
-        document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
+        activeEventName = "Double Team";
+        currentArenaBorderColor = "#9b59b6";
+        document.getElementById("winnerAnnounce").innerText = "👥 Double Team Event!";
         
-        activePokemons.forEach(p => {
-          if (p.hp > 0) {
-            p.baseSpeed *= 0.4; 
-          }
+        // Setup 3 Kreise im Dreieck angeordnet
+        const distCenter = initialArenaRadius * 0.45;
+        const subR = initialArenaRadius * 0.52;
+        doubleTeamCircles = [
+          { x: centerX, y: centerY - distCenter, r: subR },
+          { x: centerX - distCenter * 0.866, y: centerY + distCenter * 0.5, r: subR },
+          { x: centerX + distCenter * 0.866, y: centerY + distCenter * 0.5, r: subR }
+        ];
+
+        // Lebende Pokémon gleichmäßig auf die 3 Kreise verteilen
+        const alive = activePokemons.filter(p => p.hp > 0);
+        alive.sort(() => Math.random() - 0.5);
+        const perCircle = Math.ceil(alive.length / 3);
+        
+        alive.forEach((p, idx) => {
+          const circleIdx = Math.floor(idx / perCircle);
+          const c = doubleTeamCircles[Math.min(circleIdx, 2)];
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * (c.r - 40);
+          p.x = c.x + Math.cos(angle) * dist;
+          p.y = c.y + Math.sin(angle) * dist;
         });
 
-        const aliveList = activePokemons.filter(p => p.hp > 0);
-        const typesPool = aliveList.map(p => p.type);
-        typesPool.sort(() => Math.random() - 0.5);
-        
-        aliveList.forEach((p, idx) => {
-          p.type = typesPool[idx];
-          p.typeColor = typeColors[p.type] || p.color;
-        });
+        spawnBumper();
       }
     }
 
@@ -633,12 +672,12 @@
           }
         }
 
-        // Blizzard Logik
+        // Blizzard Logik (Trick Room angepasst mit Faktor 0.7)
         activePokemons.forEach(other => {
           if (other.type === "blizzard" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
             if (dist <= 160) {
-              effectiveSpeed *= 0.40;
+              effectiveSpeed *= (activeEventName === "Trick Room" ? 0.70 : 0.40);
               this.isSlowed = true;
               this.takeDamage(3 * deltaTime, other.id);
             }
@@ -699,7 +738,24 @@
         }
 
         // Bumper-Kollision
-        if (activeBumper && activeEventName !== "Primordial Sea") {
+        if (activeEventName === "Double Team") {
+          doubleTeamCircles.forEach(c => {
+            if (c.bumper) {
+              const b = c.bumper;
+              const bDist = Math.hypot(this.x - b.x, this.y - b.y);
+              if (bDist <= this.radius + b.radius) {
+                let bx = this.x - b.x;
+                let by = this.y - b.y;
+                let bLen = Math.hypot(bx, by) || 1;
+                const bumpImpulse = 1.3;
+                this.vx = (bx / bLen) * this.baseSpeed * bumpImpulse;
+                this.vy = (by / bLen) * this.baseSpeed * bumpImpulse;
+                this.x = b.x + (bx / bLen) * (this.radius + b.radius + 2);
+                b.pulseTimer = 0.25;
+              }
+            }
+          });
+        } else if (activeBumper && activeEventName !== "Primordial Sea") {
           const bDist = Math.hypot(this.x - activeBumper.x, this.y - activeBumper.y);
           if (bDist <= this.radius + activeBumper.radius) {
             let bx = this.x - activeBumper.x;
@@ -715,71 +771,106 @@
           }
         }
 
-        // Wand-Kollision & Bulk Up Logik
-        const dx = this.x - centerX;
-        const dy = this.y - centerY;
-        const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
-        const currentAngle = Math.atan2(dy, dx);
-        const maxRadius = getWavyRadius(currentAngle);
-
+        // Wand-Kollision & Event-spezifische Grenzen
         if (activeEventName === "Primordial Sea") {
           const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
-          if (this.y >= waterLineY) {
-            this.hp = 0;
-            eliminationOrder.push(this);
-            return;
-          }
-        }
+          const islandX1 = centerX - 25;
+          const islandX2 = centerX + 25;
+          const islandY = waterLineY - 10;
 
-        if (distanceToCenter + this.radius > maxRadius) {
-          if (this.type === "bulk_up") {
-            if (this.canTriggerWave) {
-              this.energyPoints++;
-              if (this.energyPoints >= 2) {
-                this.energyPoints = 0;
-                this.canTriggerWave = false; // Sperren, bis es wieder nach innen geht
-                bulkUpWaves.push({
-                  x: this.x,
-                  y: this.y,
-                  radius: 10,
-                  maxRadius: initialArenaRadius * 1.5,
-                  speed: 50,
-                  damage: 25,
-                  ownerId: this.id,
-                  hitPokemonIds: [] // Verhindert Mehrfachtreffer pro Welle
-                });
-              }
+          if (this.y >= waterLineY) {
+            // Prüfen ob Rettungs-Insel getroffen
+            if (this.x >= islandX1 && this.x <= islandX2 && Math.abs(this.y - islandY) <= 15) {
+              this.vy *= -1;
+              this.y = islandY - this.radius - 2;
+            } else {
+              this.hp = 0;
+              eliminationOrder.push(this);
+              return;
             }
           }
-
-          const deltaA = 0.01;
-          const r1 = getWavyRadius(currentAngle - deltaA);
-          const r2 = getWavyRadius(currentAngle + deltaA);
-          const dr = (r2 - r1) / (2 * deltaA);
-
-          let nx = Math.cos(currentAngle) - (dr / maxRadius) * Math.sin(currentAngle);
-          let ny = Math.sin(currentAngle) + (dr / maxRadius) * Math.cos(currentAngle);
-          const nLen = Math.hypot(nx, ny) || 1;
-          nx /= nLen;
-          ny /= nLen;
-
-          const dot = this.vx * nx + this.vy * ny;
-          if (dot > 0) {
-            this.vx -= 2 * dot * nx;
-            this.vy -= 2 * dot * ny;
-          }
-
-          const currentLen = Math.hypot(this.vx, this.vy) || 1;
-          this.vx = (this.vx / currentLen) * this.baseSpeed;
-          this.vy = (this.vy / currentLen) * this.baseSpeed;
-
-          const correctedRadius = maxRadius - this.radius - 1;
-          this.x = centerX + Math.cos(currentAngle) * correctedRadius;
-          this.y = centerY + Math.sin(currentAngle) * correctedRadius;
+        } else if (activeEventName === "Double Team") {
+          // Kollision mit den 3 Kreisen und Durchgängen
+          let insideAny = false;
+          doubleTeamCircles.forEach(c => {
+            const dx = this.x - c.x;
+            const dy = this.y - c.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist + this.radius <= c.r) {
+              insideAny = true;
+            } else if (dist < c.r + 20) {
+              // Nahe am Rand -> abprallen
+              const angle = Math.atan2(dy, dx);
+              const maxR = c.r - this.radius - 1;
+              this.x = c.x + Math.cos(angle) * maxR;
+              this.y = c.y + Math.sin(angle) * maxR;
+              
+              const nx = Math.cos(angle);
+              const ny = Math.sin(angle);
+              const dot = this.vx * nx + this.vy * ny;
+              if (dot > 0) {
+                this.vx -= 2 * dot * nx;
+                this.vy -= 2 * dot * ny;
+              }
+              insideAny = true;
+            }
+          });
         } else {
-          // Wieder im inneren Bereich -> Erlaube das Auslösen der nächsten Welle
-          if (this.type === "bulk_up") {
-            this.canTriggerWave = true;
+          const dx = this.x - centerX;
+          const dy = this.y - centerY;
+          const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+          const currentAngle = Math.atan2(dy, dx);
+          const maxRadius = getWavyRadius(currentAngle);
+
+          if (distanceToCenter + this.radius > maxRadius) {
+            if (this.type === "bulk_up") {
+              if (this.canTriggerWave) {
+                this.energyPoints++;
+                if (this.energyPoints >= 2) {
+                  this.energyPoints = 0;
+                  this.canTriggerWave = false;
+                  bulkUpWaves.push({
+                    x: this.x,
+                    y: this.y,
+                    radius: 10,
+                    maxRadius: initialArenaRadius * 1.5,
+                    speed: 50,
+                    damage: 25,
+                    ownerId: this.id,
+                    hitPokemonIds: []
+                  });
+                }
+              }
+            }
+
+            const deltaA = 0.01;
+            const r1 = getWavyRadius(currentAngle - deltaA);
+            const r2 = getWavyRadius(currentAngle + deltaA);
+            const dr = (r2 - r1) / (2 * deltaA);
+
+            let nx = Math.cos(currentAngle) - (dr / maxRadius) * Math.sin(currentAngle);
+            let ny = Math.sin(currentAngle) + (dr / maxRadius) * Math.cos(currentAngle);
+            const nLen = Math.hypot(nx, ny) || 1;
+            nx /= nLen;
+            ny /= nLen;
+
+            const dot = this.vx * nx + this.vy * ny;
+            if (dot > 0) {
+              this.vx -= 2 * dot * nx;
+              this.vy -= 2 * dot * ny;
+            }
+
+            const currentLen = Math.hypot(this.vx, this.vy) || 1;
+            this.vx = (this.vx / currentLen) * this.baseSpeed;
+            this.vy = (this.vy / currentLen) * this.baseSpeed;
+
+            const correctedRadius = maxRadius - this.radius - 1;
+            this.x = centerX + Math.cos(currentAngle) * correctedRadius;
+            this.y = centerY + Math.sin(currentAngle) * correctedRadius;
+          } else {
+            if (this.type === "bulk_up") {
+              this.canTriggerWave = true;
+            }
           }
         }
 
@@ -1180,6 +1271,9 @@
       waterRiseHeight = 0;
       grassySurgeTimer = 0;
       grassySurgeSecondHealDone = false;
+      sandStormTimer = 0;
+      sandStormRocks = [];
+      doubleTeamCircles = [];
 
       spawnBumper();
 
@@ -1207,6 +1301,25 @@
     // 7. RENDER- & SPIEL-SCHLEIFE
     // ==========================================
     function drawWavyArena() {
+      if (activeEventName === "Double Team") {
+        ctx.fillStyle = "#2c1654";
+        ctx.beginPath();
+        doubleTeamCircles.forEach(c => {
+          ctx.moveTo(c.x + c.r, c.y);
+          ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        });
+        ctx.fill();
+
+        ctx.strokeStyle = currentArenaBorderColor;
+        ctx.lineWidth = 4;
+        doubleTeamCircles.forEach(c => {
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+        return;
+      }
+
       ctx.beginPath();
       const steps = 180;
       for (let i = 0; i <= steps; i++) {
@@ -1218,7 +1331,7 @@
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = "#22222b";
+      ctx.fillStyle = activeEventName === "Sand Storm" ? "#c2b28033" : "#22222b";
       ctx.fill();
 
       if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
@@ -1227,6 +1340,14 @@
         ctx.fillStyle = "rgba(41, 128, 185, 0.5)";
         const waterY = centerY + initialArenaRadius - waterRiseHeight;
         ctx.fillRect(centerX - initialArenaRadius, waterY, initialArenaRadius * 2, initialArenaRadius * 2);
+        
+        // Kleine schmale Rettungs-Insel zeichnen
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(centerX - 25, waterY - 10, 50, 15);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(centerX - 25, waterY - 10, 50, 15);
+
         ctx.restore();
       }
 
@@ -1236,6 +1357,32 @@
     }
 
     function drawBumper() {
+      if (activeEventName === "Double Team") {
+        doubleTeamCircles.forEach(c => {
+          if (!c.bumper) return;
+          const b = c.bumper;
+          if (b.pulseTimer > 0) b.pulseTimer -= 0.016 * speedMultiplier;
+
+          ctx.save();
+          ctx.translate(b.x, b.y);
+          if (b.pulseTimer > 0) {
+            ctx.beginPath();
+            ctx.arc(0, 0, b.radius + 6, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 234, 167, 0.6)";
+            ctx.fill();
+          }
+          ctx.beginPath();
+          ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
+          ctx.fillStyle = "#ff4757";
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        });
+        return;
+      }
+
       if (!activeBumper || activeEventName === "Primordial Sea") return;
       if (activeBumper.pulseTimer > 0) activeBumper.pulseTimer -= 0.016 * speedMultiplier;
 
@@ -1287,7 +1434,11 @@
             visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.3)" });
             activePokemons.forEach(p => {
               if (p.hp > 0) {
-                p.hp = Math.min(p.maxHp, p.hp + 100); 
+                p.hp = Math.min(p.maxHp, p.hp + 100);
+                p.dots = [];
+                p.isSlowed = false;
+                p.bodySlamDebuff = false;
+                p.curseStacks = 0;
               }
             });
           }
@@ -1295,6 +1446,21 @@
 
         if (activeEventName === "Primordial Sea") {
           waterRiseHeight += deltaTime * 5.0; 
+        }
+
+        if (activeEventName === "Sand Storm") {
+          sandStormTimer += deltaTime;
+          if (sandStormTimer >= 10.0) {
+            sandStormTimer = 0;
+            // Spawn Felsen
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.random() * (arenaRadius - 40);
+            sandStormRocks.push({
+              x: centerX + Math.cos(angle) * r,
+              y: centerY + Math.sin(angle) * r,
+              radius: 10
+            });
+          }
         }
 
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
@@ -1307,6 +1473,52 @@
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
+        // Sand Storm Felsen zeichnen & Kollisionsprüfung
+        if (activeEventName === "Sand Storm") {
+          for (let i = sandStormRocks.length - 1; i >= 0; i--) {
+            const rock = sandStormRocks[i];
+            ctx.beginPath();
+            ctx.arc(rock.x, rock.y, rock.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#8b5a2b";
+            ctx.fill();
+            ctx.strokeStyle = "#deb887";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Prüfen ob Pokémon einsammelt
+            for (let p of activePokemons) {
+              if (p.hp > 0 && Math.hypot(p.x - rock.x, p.y - rock.y) <= p.radius + rock.radius) {
+                // Buff oder Nerf anwenden
+                const isBuff = Math.random() < 0.5;
+                const stats = ["ATK", "DEF", "Move Speed", "Attack Speed", "Range"];
+                const chosenStat = stats[Math.floor(Math.random() * stats.length)];
+                
+                let textVal = "";
+                if (isBuff) {
+                  if (chosenStat === "ATK") { p.attack += 5; textVal = "+5 ATK"; }
+                  else if (chosenStat === "DEF") { p.defense += 5; textVal = "+5 DEF"; }
+                  else if (chosenStat === "Move Speed") { p.baseSpeed += 0.5; textVal = "+0.5 Move Speed"; }
+                  else if (chosenStat === "Attack Speed") { p.attackSpeed = Math.max(0.2, p.attackSpeed - 0.2); textVal = "-0.2 Attack Speed"; }
+                  else if (chosenStat === "Range") { p.attackRange += 10; textVal = "+10 Range"; }
+
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 1.0, text: textVal, color: "#2ed573" });
+                } else {
+                  if (chosenStat === "ATK") { p.attack = Math.max(5, p.attack - 5); textVal = "-5 ATK"; }
+                  else if (chosenStat === "DEF") { p.defense = Math.max(0, p.defense - 5); textVal = "-5 DEF"; }
+                  else if (chosenStat === "Move Speed") { p.baseSpeed = Math.max(0.2, p.baseSpeed - 0.5); textVal = "-0.5 Move Speed"; }
+                  else if (chosenStat === "Attack Speed") { p.attackSpeed += 0.2; textVal = "+0.2 Attack Speed"; }
+                  else if (chosenStat === "Range") { p.attackRange = Math.max(50, p.attackRange - 10); textVal = "-10 Range"; }
+
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 1.0, text: textVal, color: "#ff4757" });
+                }
+
+                sandStormRocks.splice(i, 1);
+                break;
+              }
+            }
+          }
+        }
+
         for (let i = scorchTrails.length - 1; i >= 0; i--) {
           const trail = scorchTrails[i];
           trail.timer -= deltaTime;
@@ -1371,7 +1583,6 @@
 
           activePokemons.forEach(p => {
             if (p.id !== wave.ownerId && p.hp > 0) {
-              // Prüfen, ob das Pokémon bereits von dieser spezifischen Welle getroffen wurde
               if (wave.hitPokemonIds && wave.hitPokemonIds.includes(p.id)) return;
 
               const d = Math.hypot(p.x - wave.x, p.y - wave.y);
@@ -1424,7 +1635,7 @@
             ctx.lineTo(fx.x2, fx.y2);
             ctx.stroke();
           } else if (fx.type === "crit_text") {
-            ctx.fillStyle = "#ff4d4d";
+            ctx.fillStyle = fx.color || "#ff4d4d";
             ctx.font = "bold 14px Arial";
             ctx.textAlign = "center";
             ctx.fillText(fx.text || "CRIT!", fx.x, fx.y);
@@ -1447,7 +1658,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // Initialisierung starten
     buildSelectionMenu();
     requestAnimationFrame(gameLoop);
   </script>
