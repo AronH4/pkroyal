@@ -708,30 +708,36 @@
           }
         }
 
-        // Wand-Kollision (inklusive Sea Event Prüfung)
+        // 1. Insel-Kollision im Primordial Sea Event (Prüfung auf Rechteck/Box)
+        if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
+          const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
+          const islandX1 = centerX - 35; // Erweiterte Hitbox für verlässliches Abprallen
+          const islandX2 = centerX + 35;
+          const islandY1 = waterLineY - 20;
+          const islandY2 = waterLineY + 10;
+
+          // Befindet sich das Pokémon in der Hitbox der Rettungsinsel?
+          if (this.x + this.radius >= islandX1 && this.x - this.radius <= islandX2 &&
+              this.y + this.radius >= islandY1 && this.y - this.radius <= islandY2) {
+            
+            // Reflektiere Y-Geschwindigkeit und drücke Pokémon nach oben ab
+            if (this.vy > 0) this.vy *= -1;
+            this.y = islandY1 - this.radius - 2;
+          } 
+          // Ansonsten: Wenn es unterhalb der Wasserlinie ist, stirbt es
+          else if (this.y + this.radius >= waterLineY) {
+            this.hp = 0;
+            eliminationOrder.push(this);
+            return;
+          }
+        }
+
+        // 2. Reguläre Arena-Wandkollision
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
         const currentAngle = Math.atan2(dy, dx);
         const maxRadius = getWavyRadius(currentAngle);
-
-        if (activeEventName === "Primordial Sea") {
-          const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
-          const islandX1 = centerX - 25;
-          const islandX2 = centerX + 25;
-          const islandY = waterLineY - 10;
-
-          if (this.y >= waterLineY) {
-            if (this.x >= islandX1 && this.x <= islandX2 && Math.abs(this.y - islandY) <= 15) {
-              this.vy *= -1;
-              this.y = islandY - this.radius - 2;
-            } else {
-              this.hp = 0;
-              eliminationOrder.push(this);
-              return;
-            }
-          }
-        }
 
         if (distanceToCenter + this.radius > maxRadius) {
           if (this.type === "bulk_up") {
