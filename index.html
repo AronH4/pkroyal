@@ -406,7 +406,6 @@
 
     function spawnBumper() {
       if (activeEventName === "Double Team") {
-        // Erstelle für jeden der 3 Kreise einen Bumper
         doubleTeamCircles.forEach(c => {
           const angle = Math.random() * Math.PI * 2;
           c.bumper = {
@@ -481,7 +480,7 @@
       } else if (roll < 85) {
         activeEventName = "Sand Storm";
         currentArenaBorderColor = "#c2b280";
-        document.getElementById("winnerAnnounce").innerText = "沙 Sand Storm Event!";
+        document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
         sandStormTimer = 0;
         sandStormRocks = [];
       } else {
@@ -489,16 +488,15 @@
         currentArenaBorderColor = "#9b59b6";
         document.getElementById("winnerAnnounce").innerText = "👥 Double Team Event!";
         
-        // Setup 3 Kreise im Dreieck angeordnet
-        const distCenter = initialArenaRadius * 0.45;
-        const subR = initialArenaRadius * 0.52;
+        // Exakte Berührung der Kreise ohne Überlappung
+        const subR = initialArenaRadius * 0.45;
+        const distCenter = subR * Math.sqrt(3); 
         doubleTeamCircles = [
-          { x: centerX, y: centerY - distCenter, r: subR },
-          { x: centerX - distCenter * 0.866, y: centerY + distCenter * 0.5, r: subR },
-          { x: centerX + distCenter * 0.866, y: centerY + distCenter * 0.5, r: subR }
+          { x: centerX, y: centerY - distCenter / 3, r: subR },
+          { x: centerX - subR * 0.866, y: centerY + distCenter * 0.166, r: subR },
+          { x: centerX + subR * 0.866, y: centerY + distCenter * 0.166, r: subR }
         ];
 
-        // Lebende Pokémon gleichmäßig auf die 3 Kreise verteilen
         const alive = activePokemons.filter(p => p.hp > 0);
         alive.sort(() => Math.random() - 0.5);
         const perCircle = Math.ceil(alive.length / 3);
@@ -543,12 +541,10 @@
         this.toxicStacks = [];
         this.bodySlamDebuff = false;
 
-        // Dragon Dance Variablen
         this.dragonDanceActive = false;
         this.dragonDanceTimer = 0;
         this.dragonDanceTriggered = false;
 
-        // Bulk Up Energie-Zähler & Cooldown-Sicherung
         this.energyPoints = 0;
         this.canTriggerWave = true;
 
@@ -592,7 +588,6 @@
       update(deltaTime) {
         if (this.hp <= 0) return;
 
-        // Dragon Dance Logik
         if (this.type === "dragon_dance") {
           if (!this.dragonDanceTriggered && this.hp <= 100) {
             this.dragonDanceTriggered = true;
@@ -613,7 +608,6 @@
         }
         this.isSlowed = false;
 
-        // Reflect Logik
         if (this.type === "reflect") {
           this.orbAngle += 1.8 * deltaTime; 
           const orbDist = this.radius + 20;
@@ -653,7 +647,6 @@
           });
         }
 
-        // Leech Seed Logik
         if (this.type === "leech_seed") {
           if (this.seedDropCooldown > 0) {
             this.seedDropCooldown -= deltaTime;
@@ -672,7 +665,6 @@
           }
         }
 
-        // Blizzard Logik (Trick Room angepasst mit Faktor 0.7)
         activePokemons.forEach(other => {
           if (other.type === "blizzard" && other.hp > 0 && other !== this) {
             const dist = Math.hypot(other.x - this.x, other.y - this.y);
@@ -684,7 +676,6 @@
           }
         });
 
-        // Earthquake Trail Logik
         scorchTrails.forEach(trail => {
           if (trail.ownerId !== this.id) {
             const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
@@ -704,7 +695,6 @@
           });
         }
 
-        // Status-Effekte
         if (this.toxicStacks.length > 0) {
           this.toxicStacks.forEach(stack => {
             this.takeDamage(2 * deltaTime, stack.attackerId);
@@ -721,7 +711,6 @@
           }
         }
 
-        // Bewegung
         const aliveListForCenter = activePokemons.filter(p => p.hp > 0);
         if (aliveListForCenter.length === 1 && aliveListForCenter[0] === this) {
           let distToCenter = Math.hypot(centerX - this.x, centerY - this.y);
@@ -737,7 +726,6 @@
           this.y += currentVy;
         }
 
-        // Bumper-Kollision
         if (activeEventName === "Double Team") {
           doubleTeamCircles.forEach(c => {
             if (c.bumper) {
@@ -771,7 +759,6 @@
           }
         }
 
-        // Wand-Kollision & Event-spezifische Grenzen
         if (activeEventName === "Primordial Sea") {
           const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
           const islandX1 = centerX - 25;
@@ -779,7 +766,6 @@
           const islandY = waterLineY - 10;
 
           if (this.y >= waterLineY) {
-            // Prüfen ob Rettungs-Insel getroffen
             if (this.x >= islandX1 && this.x <= islandX2 && Math.abs(this.y - islandY) <= 15) {
               this.vy *= -1;
               this.y = islandY - this.radius - 2;
@@ -790,21 +776,47 @@
             }
           }
         } else if (activeEventName === "Double Team") {
-          // Kollision mit den 3 Kreisen und Durchgängen
-          let insideAny = false;
+          // Begrenzung für Double Team mit Durchgängen an den Berührungspunkten
+          let inAny = false;
+          let currentC = null;
           doubleTeamCircles.forEach(c => {
-            const dx = this.x - c.x;
-            const dy = this.y - c.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist + this.radius <= c.r) {
-              insideAny = true;
-            } else if (dist < c.r + 20) {
-              // Nahe am Rand -> abprallen
-              const angle = Math.atan2(dy, dx);
-              const maxR = c.r - this.radius - 1;
-              this.x = c.x + Math.cos(angle) * maxR;
-              this.y = c.y + Math.sin(angle) * maxR;
-              
+            const d = Math.hypot(this.x - c.x, this.y - c.y);
+            if (d <= c.r) {
+              inAny = true;
+              currentC = c;
+            }
+          });
+
+          if (!inAny) {
+            // Finde den nächstgelegenen Kreis und pralle von seiner Grenze ab, es sei denn man ist nahe an einem Durchgang
+            let nearestC = doubleTeamCircles[0];
+            let minDist = Math.hypot(this.x - nearestC.x, this.y - nearestC.y);
+            doubleTeamCircles.forEach(c => {
+              const d = Math.hypot(this.x - c.x, this.y - c.y);
+              if (d < minDist) {
+                minDist = d;
+                nearestC = c;
+              }
+            });
+
+            // Prüfen ob im Durchgangsbereich zu einem anderen Kreis
+            let nearGateway = false;
+            doubleTeamCircles.forEach(otherC => {
+              if (otherC !== nearestC) {
+                const midX = (nearestC.x + otherC.x) / 2;
+                const midY = (nearestC.y + otherC.y) / 2;
+                if (Math.hypot(this.x - midX, this.y - midY) < 35) {
+                  nearGateway = true;
+                }
+              }
+            });
+
+            if (!nearGateway) {
+              const angle = Math.atan2(this.y - nearestC.y, this.x - nearestC.x);
+              const maxR = nearestC.r - this.radius - 1;
+              this.x = nearestC.x + Math.cos(angle) * maxR;
+              this.y = nearestC.y + Math.sin(angle) * maxR;
+
               const nx = Math.cos(angle);
               const ny = Math.sin(angle);
               const dot = this.vx * nx + this.vy * ny;
@@ -812,9 +824,8 @@
                 this.vx -= 2 * dot * nx;
                 this.vy -= 2 * dot * ny;
               }
-              insideAny = true;
             }
-          });
+          }
         } else {
           const dx = this.x - centerX;
           const dy = this.y - centerY;
@@ -1310,13 +1321,31 @@
         });
         ctx.fill();
 
+        // Zeichne Kreise mit offenen Durchgängen an den Berührungspunkten
         ctx.strokeStyle = currentArenaBorderColor;
         ctx.lineWidth = 4;
-        doubleTeamCircles.forEach(c => {
+        
+        // Da sich die Kreise exakt berühren, zeichnen wir sie über Arc-Segmente oder lassen Bogen weg
+        doubleTeamCircles.forEach((c, idx) => {
           ctx.beginPath();
           ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
           ctx.stroke();
         });
+
+        // Übermalen der berührenden Schnittstellen mit Hintergrundfarbe für Durchgänge
+        doubleTeamCircles.forEach((c1, i) => {
+          doubleTeamCircles.forEach((c2, j) => {
+            if (i < j) {
+              const midX = (c1.x + c2.x) / 2;
+              const midY = (c1.y + c2.y) / 2;
+              ctx.beginPath();
+              ctx.arc(midX, midY, 25, 0, Math.PI * 2);
+              ctx.fillStyle = "#2c1654";
+              ctx.fill();
+            }
+          });
+        });
+
         return;
       }
 
@@ -1341,7 +1370,6 @@
         const waterY = centerY + initialArenaRadius - waterRiseHeight;
         ctx.fillRect(centerX - initialArenaRadius, waterY, initialArenaRadius * 2, initialArenaRadius * 2);
         
-        // Kleine schmale Rettungs-Insel zeichnen
         ctx.fillStyle = "#8b5a2b";
         ctx.fillRect(centerX - 25, waterY - 10, 50, 15);
         ctx.strokeStyle = "#ffffff";
@@ -1450,9 +1478,8 @@
 
         if (activeEventName === "Sand Storm") {
           sandStormTimer += deltaTime;
-          if (sandStormTimer >= 10.0) {
+          if (sandStormTimer >= 20.0) { // Korrigiert auf alle 20 Sekunden
             sandStormTimer = 0;
-            // Spawn Felsen
             const angle = Math.random() * Math.PI * 2;
             const r = Math.random() * (arenaRadius - 40);
             sandStormRocks.push({
@@ -1473,7 +1500,6 @@
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
-        // Sand Storm Felsen zeichnen & Kollisionsprüfung
         if (activeEventName === "Sand Storm") {
           for (let i = sandStormRocks.length - 1; i >= 0; i--) {
             const rock = sandStormRocks[i];
@@ -1485,10 +1511,8 @@
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // Prüfen ob Pokémon einsammelt
             for (let p of activePokemons) {
               if (p.hp > 0 && Math.hypot(p.x - rock.x, p.y - rock.y) <= p.radius + rock.radius) {
-                // Buff oder Nerf anwenden
                 const isBuff = Math.random() < 0.5;
                 const stats = ["ATK", "DEF", "Move Speed", "Attack Speed", "Range"];
                 const chosenStat = stats[Math.floor(Math.random() * stats.length)];
@@ -1501,7 +1525,7 @@
                   else if (chosenStat === "Attack Speed") { p.attackSpeed = Math.max(0.2, p.attackSpeed - 0.2); textVal = "-0.2 Attack Speed"; }
                   else if (chosenStat === "Range") { p.attackRange += 10; textVal = "+10 Range"; }
 
-                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 1.0, text: textVal, color: "#2ed573" });
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 2.5, text: textVal, color: "#2ed573" }); // Timer auf 2.5s erhöht
                 } else {
                   if (chosenStat === "ATK") { p.attack = Math.max(5, p.attack - 5); textVal = "-5 ATK"; }
                   else if (chosenStat === "DEF") { p.defense = Math.max(0, p.defense - 5); textVal = "-5 DEF"; }
@@ -1509,7 +1533,7 @@
                   else if (chosenStat === "Attack Speed") { p.attackSpeed += 0.2; textVal = "+0.2 Attack Speed"; }
                   else if (chosenStat === "Range") { p.attackRange = Math.max(50, p.attackRange - 10); textVal = "-10 Range"; }
 
-                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 1.0, text: textVal, color: "#ff4757" });
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 2.5, text: textVal, color: "#ff4757" }); // Timer auf 2.5s erhöht
                 }
 
                 sandStormRocks.splice(i, 1);
