@@ -446,12 +446,20 @@
             p.bodySlamDebuff = false;
             p.curseStacks = 0;
           }
+          activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.8; 
+          }
         });
       } else if (roll < 70) {
         activeEventName = "Primordial Sea";
         currentArenaBorderColor = "#2980b9";
         document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
         waterRiseHeight = 0;
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.8; 
+          }
       } else if (roll < 85) {
         activeEventName = "Trick Room";
         currentArenaBorderColor = "#ff9ff3";
@@ -477,6 +485,10 @@
         document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
         sandStormTimer = 0;
         sandStormRocks = [];
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.7; 
+          }
       }
     }
 
