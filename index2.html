@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>PK Royal</title>
+  <style>
+    body {
+      background-color: #1e1e24;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 5px;
+    }
+
+    #winnerAnnounce {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffcb05;
+      height: 35px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(255, 203, 5, 0.4);
+    }
+
+    #topControls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+      background: #2b2b36;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: 1px solid #2a75bb;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .speed-control input[type="range"] {
+      width: 130px;
+      cursor: pointer;
+    }
+
+    #setupMenu {
+      display: none;
+      background-color: #2b2b36;
+      border: 2px solid #2a75bb;
+      border-radius: 12px;
+      padding: 15px 25px;
+      margin-bottom: 15px;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+    }
+
+    .pokemon-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      max-height: none;
+      padding-right: 0;
+    }
+
+    .pokemon-option {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e1e24;
+      padding: 4px;
+      border-radius: 8px;
+      border: 2px solid #555;
+      cursor: pointer;
+      user-select: none;
+      opacity: 0.4;
+      transition: all 0.2s ease;
+    }
+
+    .pokemon-option:has(input:checked) {
+      opacity: 1.0;
+      background: #2b2b36;
+      box-shadow: 0 0 8px rgba(0,0,0,0.6);
+    }
+
+    .pokemon-option input {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      margin: 0;
+      transform: scale(0.85);
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .pokemon-option img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 22px;
+      font-size: 15px;
+      font-weight: bold;
+      background-color: #ffcb05;
+      color: #2a75bb;
+      border: 2px solid #2a75bb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background-color: #ffe066;
+    }
+
+    button.secondary {
+      background-color: #3a3a4a;
+      color: #ffffff;
+      border-color: #555566;
+    }
+
+    button.secondary:hover {
+      background-color: #4a4a5a;
+    }
+
+    .main-container {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    canvas {
+      background-color: #2b2b36;
+      border: 5px solid #ffcb05;
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    .side-panel {
+      background-color: #2b2b36;
+      border: 2px solid #2a75bb;
+      border-radius: 12px;
+      padding: 15px;
+      width: 440px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+    }
+
+    .side-panel h3 {
+      margin-top: 0;
+      text-align: center;
+      color: #ffcb05;
+      border-bottom: 1px solid #2a75bb;
+      padding-bottom: 8px;
+    }
+
+    #leaderboardList, #placementList {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+    }
+
+    .lb-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 2px;
+      font-size: 12px;
+      border-bottom: 1px solid #3a3a4a;
+    }
+
+    .lb-name {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .lb-dmg {
+      color: #ff7675;
+      font-weight: bold;
+      margin-left: 5px;
+    }
+
+    .place-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      font-size: 12px;
+      border-bottom: 1px solid #3a3a4a;
+      border-radius: 4px;
+      background: #1e1e24;
+    }
+
+    .place-item.alive {
+      border-left: 3px solid #2ed573;
+    }
+
+    .place-item.dead {
+      opacity: 0.5;
+      border-left: 3px solid #ff4757;
+    }
+
+    .place-rank {
+      font-weight: bold;
+      width: 24px;
+      color: #ffcb05;
+      font-size: 11px;
+    }
+
+    .place-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>PK Royal</h1>
+  <div id="winnerAnnounce">Get Ready!</div>
+
+  <div id="topControls">
+    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
+    <div class="speed-control">
+      <span>Speed:</span>
+      <input type="range" id="speedSlider" min="1.0" max="9.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
+      <span id="speedVal">1.0x</span>
+    </div>
+    <button onclick="startSelectedMatch()">⚔️ GO!</button>
+  </div>
+
+  <div id="setupMenu">
+    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Pokémon Auswählen</div>
+    <div class="pokemon-grid" id="pokemonSelectionList"></div>
+    <div class="button-group">
+      <button class="secondary" onclick="selectAll(true)">All</button>
+      <button class="secondary" onclick="selectAll(false)">None</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div id="placementPanel" class="side-panel">
+      <h3>🏆 Placement</h3>
+      <div id="placementList"></div>
+    </div>
+
+    <canvas id="arenaCanvas" width="750" height="750"></canvas>
+
+    <div id="leaderboard" class="side-panel">
+      <h3>📊 Damage Ranking</h3>
+      <div id="leaderboardList"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. GRUNDEINSTELLUNGEN & VARIABLEN
+    // ==========================================
+    const canvas = document.getElementById("arenaCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const initialArenaRadius = canvas.width / 2 - 12;
+    let arenaRadius = initialArenaRadius;
+
+    let waveAmplitude = 8;
+    let waveFrequency = 6;
+    let wavePhase = 0;
+
+    let activeBumper = null;
+    let speedMultiplier = 1.0;
+    let battleTime = 0;
+    let shrinkIntervalCount = 0;
+
+    let activePokemons = [];
+    let projectiles = [];
+    let visualEffects = [];
+    let scorchTrails = [];
+    let leechSeeds = [];
+    let bulkUpWaves = [];
+    let sandStormRocks = [];
+    let matchStarted = false;
+    let gameOver = false;
+    let lastTime = 0;
+    let eliminationOrder = [];
+
+    // Event System Variablen
+    let top10EventTriggered = false;
+    let activeEventName = null;
+    let currentArenaBorderColor = "#ffcb05";
+    let waterRiseHeight = 0; 
+    let grassySurgeTimer = 0; 
+    let grassySurgeSecondHealDone = false;
+    let sandStormTimer = 0;
+
+    // ==========================================
+    // 2. DATENBANK & TYPEN-FARBEN
+    // ==========================================
+    const typeColors = {
+      flamethrower: "#ea4335",        
+      thunderbolt: "#ffd432",       
+      blizzard: "#48dbfb",   
+      sucker_punch: "#ffffff",        
+      toxic: "#9683d9",   
+      body_slam: "#c1baba",    
+      long_reach: "#0984e3",  
+      earthquake: "#ff7a18",      
+      reflect: "#ff9ff3",     
+      leech_seed: "#23d46c",
+      dragon_dance: "#8b0000",
+      bulk_up: "#bde168"
+    };
+
+    const pokemonTemplates = [
+      { name: "Panferno",       color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "flamethrower", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/392.png" },
+      { name: "Rotom",          color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "thunderbolt", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/479.png" },
+      { name: "Rexblisar",      color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.1, attackRange: 150, type: "blizzard", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/460.png" },
+      { name: "Impi",           color: "#8b0000", maxHp: 400, attack: 23, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "dragon_dance", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+      { name: "Nachtara",       color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "toxic", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/197.png" },
+      { name: "Pikachu",        color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "thunderbolt", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
+      { name: "Gengar",         color: "#6c5ce7", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "toxic", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+      { name: "Arkani",         color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "flamethrower", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/59.png" },
+      { name: "Relaxo",         color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+      { name: "Tengulist",      color: "#2ed573", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "sucker_punch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/275.png" },
+      { name: "Stolloss",       color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+      { name: "Pelipper",       color: "#70a1ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/279.png" },
+      { name: "Rabigator",      color: "#ff6348", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "earthquake", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/553.png" },
+      { name: "Zytomega",       color: "#1dd1a1", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "reflect", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/579.png" },
+      { name: "Fermicula",      color: "#57606f", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "sucker_punch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/632.png" },
+      { name: "Brigaron",       color: "#10ac84", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/652.png" },
+      { name: "Fiaro",          color: "#e25822", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.45, attackRange: 150, type: "flamethrower", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/663.png" },
+      { name: "Elezard",        color: "#f39c12", maxHp: 400, attack: 15, defense: 15, speed: 0.5, attackSpeed: 0.35, attackRange: 170, type: "thunderbolt", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/695.png" },
+      { name: "Durengard",      color: "#1dd1a1", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "reflect", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/681.png" },
+      { name: "Silvarro",       color: "#70a1ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/724.png" },
+      { name: "Curelei",        color: "#10ac84", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "leech_seed", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/764.png" },
+      { name: "Alola-Sandamer", color: "#74b9ff", maxHp: 400, attack: 20, defense: 17, speed: 0.5, attackSpeed: 1.1, attackRange: 150, type: "blizzard", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10102.png" },
+      { name: "Krarmor",        color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/823.png" },
+      { name: "Lauchzelot",     color: "#f8c291", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "sucker_punch", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/865.png" },
+      { name: "Olangaar",       color: "#1dd1a1", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.5, attackRange: 150, type: "reflect", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/861.png" },
+      { name: "Katapuldra",     color: "#8b0000", maxHp: 400, attack: 23, defense: 15, speed: 0.5, attackSpeed: 0.85, attackRange: 150, type: "dragon_dance", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/887.png" },
+      { name: "Arceus",         color: "#ff6348", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.2, attackRange: 150, type: "earthquake", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/493.png" },
+      { name: "Pamomamo",       color: "#341f97", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.0, attackRange: 150, type: "bulk_up", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/923.png" },
+      { name: "Saltigant",      color: "#636e72", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.6, attackRange: 150, type: "body_slam", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/934.png" },
+      { name: "Eisenbündel",    color: "#70a1ff", maxHp: 400, attack: 20, defense: 15, speed: 0.5, attackSpeed: 1.8, attackRange: 190, type: "long_reach", img: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/991.png" }
+    ];
+
+    // ==========================================
+    // 3. ARENA & BUMPER FUNKTIONEN
+    // ==========================================
+    function getWavyRadius(angle) {
+      return arenaRadius + Math.sin(angle * waveFrequency + wavePhase) * waveAmplitude;
+    }
+
+    function updateBumperPosition() {
+      if (!activeBumper) return;
+      const r = getWavyRadius(activeBumper.angle) - 15;
+      activeBumper.x = centerX + Math.cos(activeBumper.angle) * r;
+      activeBumper.y = centerY + Math.sin(activeBumper.angle) * r;
+    }
+
+    function spawnBumper() {
+      const angle = Math.random() * Math.PI * 2;
+      activeBumper = {
+        angle: angle,
+        radius: 18,
+        x: 0,
+        y: 0,
+        pulseTimer: 0
+      };
+      updateBumperPosition();
+    }
+
+    function applyShrinkAndReshape() {
+      if (activeEventName === "Primordial Sea") return;
+
+      arenaRadius *= 0.90;
+      waveAmplitude = 6 + Math.random() * 8; 
+      waveFrequency = Math.floor(4 + Math.random() * 6);
+      wavePhase = Math.random() * Math.PI * 2;
+      spawnBumper();
+    }
+
+    // ==========================================
+    // 4. TOP 10 EVENT SYSTEM LOGIK
+    // ==========================================
+    function triggerTop10Event() {
+      top10EventTriggered = true;
+      const roll = Math.random() * 100;
+      
+      if (roll < 40) {
+        activeEventName = "Classic";
+        currentArenaBorderColor = "#ffcb05";
+        document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
+      } else if (roll < 55) {
+        activeEventName = "Grassy Surge";
+        currentArenaBorderColor = "#2ed573";
+        document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
+        visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.4)" });
+        
+        grassySurgeTimer = 0;
+        grassySurgeSecondHealDone = false;
+
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.hp = Math.min(p.maxHp, p.hp + 200);
+            p.dots = [];
+            p.isSlowed = false;
+            p.bodySlamDebuff = false;
+            p.curseStacks = 0;
+          }
+        });
+      } else if (roll < 70) {
+        activeEventName = "Primordial Sea";
+        currentArenaBorderColor = "#2980b9";
+        document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
+        waterRiseHeight = 0;
+      } else if (roll < 85) {
+        activeEventName = "Trick Room";
+        currentArenaBorderColor = "#ff9ff3";
+        document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
+        
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.7; 
+          }
+        });
+
+        const aliveList = activePokemons.filter(p => p.hp > 0);
+        const typesPool = aliveList.map(p => p.type);
+        typesPool.sort(() => Math.random() - 0.5);
+        
+        aliveList.forEach((p, idx) => {
+          p.type = typesPool[idx];
+          p.typeColor = typeColors[p.type] || p.color;
+        });
+      } else {
+        activeEventName = "Sand Storm";
+        currentArenaBorderColor = "#c2b280";
+        document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
+        sandStormTimer = 0;
+        sandStormRocks = [];
+      }
+    }
+
+    // ==========================================
+    // 5. KLASSEN (POKEMON & PROJEKTIL)
+    // ==========================================
+    class Pokemon {
+      constructor(template, id) {
+        this.id = id;
+        this.name = template.name;
+        this.color = template.color;
+        this.typeColor = typeColors[template.type] || template.color;
+        this.maxHp = template.maxHp;
+        this.hp = template.maxHp;
+        this.attack = template.attack;
+        this.defense = template.defense;
+        this.baseSpeed = template.speed;
+        this.attackSpeed = template.attackSpeed;
+        this.attackRange = template.attackRange;
+        this.type = template.type;
+        this.attackCooldown = 0;
+        this.radius = 20;
+
+        this.totalDamageDealt = 0;
+        this.isSlowed = false;
+
+        this.dots = [];
+        this.toxicStacks = [];
+        this.bodySlamDebuff = false;
+
+        this.dragonDanceActive = false;
+        this.dragonDanceTimer = 0;
+        this.dragonDanceTriggered = false;
+
+        this.energyPoints = 0;
+        this.canTriggerWave = true;
+
+        this.orbAngle = Math.random() * Math.PI * 2;
+        this.orbHitCooldowns = new Map();
+        this.seedDropCooldown = 0;
+
+        this.imageLoaded = false;
+        this.image = new Image();
+        this.image.src = template.img;
+        this.image.onload = () => { this.imageLoaded = true; };
+
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * (arenaRadius - 50);
+        this.x = centerX + r * Math.cos(angle);
+        this.y = centerY + r * Math.sin(angle);
+
+        const moveAngle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(moveAngle) * this.baseSpeed;
+        this.vy = Math.sin(moveAngle) * this.baseSpeed;
+      }
+
+      get curseStacks() {
+        return this.toxicStacks.length;
+      }
+      set curseStacks(val) {
+        if (val === 0) this.toxicStacks = [];
+      }
+
+      applyDoT(type, duration, dps, attackerId = null) {
+        const aliveList = activePokemons.filter(p => p.hp > 0);
+        if (aliveList.length === 1 && aliveList[0] === this) return;
+
+        if (type === "toxic") {
+          this.toxicStacks.push({ attackerId });
+          return;
+        }
+        this.dots.push({ type, duration, dps, attackerId });
+      }
+
+      update(deltaTime) {
+        if (this.hp <= 0) return;
+
+        if (this.type === "dragon_dance") {
+          if (!this.dragonDanceTriggered && this.hp <= 100) {
+            this.dragonDanceTriggered = true;
+            this.dragonDanceActive = true;
+            this.dragonDanceTimer = 20.0;
+          }
+          if (this.dragonDanceActive) {
+            this.dragonDanceTimer -= deltaTime;
+            if (this.dragonDanceTimer <= 0) {
+              this.dragonDanceActive = false;
+            }
+          }
+        }
+
+        let effectiveSpeed = this.baseSpeed;
+        if (this.dragonDanceActive) {
+          effectiveSpeed *= 3.0;
+        }
+        this.isSlowed = false;
+
+        if (this.type === "reflect") {
+          this.orbAngle += 1.8 * deltaTime; 
+          const orbDist = this.radius + 20;
+          const orbRadius = 6;
+
+          const orbPositions = [
+            { x: this.x + Math.cos(this.orbAngle) * orbDist, y: this.y + Math.sin(this.orbAngle) * orbDist },
+            { x: this.x + Math.cos(this.orbAngle + Math.PI) * orbDist, y: this.y + Math.sin(this.orbAngle + Math.PI) * orbDist }
+          ];
+
+          this.orbHitCooldowns.forEach((cd, key) => {
+            if (cd > 0) this.orbHitCooldowns.set(key, cd - deltaTime);
+          });
+
+          activePokemons.forEach(other => {
+            if (other !== this && other.hp > 0) {
+              for (let orb of orbPositions) {
+                if (Math.hypot(other.x - orb.x, other.y - orb.y) <= other.radius + orbRadius) {
+                  const currentCd = this.orbHitCooldowns.get(other.id) || 0;
+                  if (currentCd <= 0) {
+                    const baseDmg = Math.max(3, this.attack * 1.0);
+                    other.takeDamage(baseDmg, this.id);
+
+                    let kx = other.x - this.x;
+                    let ky = other.y - this.y;
+                    let kDist = Math.hypot(kx, ky) || 1;
+                    const knockbackDist = 25;
+
+                    other.x += (kx / kDist) * knockbackDist;
+                    other.y += (ky / kDist) * knockbackDist;
+
+                    this.orbHitCooldowns.set(other.id, 0.5);
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        if (this.type === "leech_seed") {
+          if (this.seedDropCooldown > 0) {
+            this.seedDropCooldown -= deltaTime;
+          } else {
+            let vLen = Math.hypot(this.vx, this.vy) || 1;
+            const dropX = this.x - (this.vx / vLen) * (this.radius + 18);
+            const dropY = this.y - (this.vy / vLen) * (this.radius + 18);
+
+            leechSeeds.push({
+              x: dropX,
+              y: dropY,
+              radius: 8,
+              ownerId: this.id
+            });
+            this.seedDropCooldown = 8.0 / this.attackSpeed;
+          }
+        }
+
+        activePokemons.forEach(other => {
+          if (other.type === "blizzard" && other.hp > 0 && other !== this) {
+            const dist = Math.hypot(other.x - this.x, other.y - this.y);
+            if (dist <= 160) {
+              effectiveSpeed *= (activeEventName === "Trick Room" ? 0.70 : 0.40);
+              this.isSlowed = true;
+              this.takeDamage(3 * deltaTime, other.id);
+            }
+          }
+        });
+
+        scorchTrails.forEach(trail => {
+          if (trail.ownerId !== this.id) {
+            const dist = Math.hypot(trail.x - this.x, trail.y - this.y);
+            if (dist < trail.radius) {
+              this.takeDamage(1.8 * deltaTime, trail.ownerId);
+            }
+          }
+        });
+
+        if (this.type === "earthquake") {
+          scorchTrails.push({
+            x: this.x,
+            y: this.y,
+            radius: 20,
+            timer: 6.0,
+            ownerId: this.id
+          });
+        }
+
+        if (this.toxicStacks.length > 0) {
+          this.toxicStacks.forEach(stack => {
+            this.takeDamage(2 * deltaTime, stack.attackerId);
+          });
+        }
+
+        for (let i = this.dots.length - 1; i >= 0; i--) {
+          const dot = this.dots[i];
+          dot.duration -= deltaTime;
+          this.takeDamage(dot.dps * deltaTime, dot.attackerId);
+
+          if (dot.duration <= 0) {
+            this.dots.splice(i, 1);
+          }
+        }
+
+        const aliveListForCenter = activePokemons.filter(p => p.hp > 0);
+        if (aliveListForCenter.length === 1 && aliveListForCenter[0] === this) {
+          let distToCenter = Math.hypot(centerX - this.x, centerY - this.y);
+          if (distToCenter > 2) {
+            let angleToCenter = Math.atan2(centerY - this.y, centerX - this.x);
+            this.x += Math.cos(angleToCenter) * Math.min(distToCenter, effectiveSpeed * speedMultiplier);
+            this.y += Math.sin(angleToCenter) * Math.min(distToCenter, effectiveSpeed * speedMultiplier);
+          }
+        } else {
+          const currentVx = (this.vx / this.baseSpeed) * effectiveSpeed * speedMultiplier;
+          const currentVy = (this.vy / this.baseSpeed) * effectiveSpeed * speedMultiplier;
+          this.x += currentVx;
+          this.y += currentVy;
+        }
+
+        if (activeBumper && activeEventName !== "Primordial Sea") {
+          const bDist = Math.hypot(this.x - activeBumper.x, this.y - activeBumper.y);
+          if (bDist <= this.radius + activeBumper.radius) {
+            let bx = this.x - activeBumper.x;
+            let by = this.y - activeBumper.y;
+            let bLen = Math.hypot(bx, by) || 1;
+            
+            const bumpImpulse = 1.3;
+            this.vx = (bx / bLen) * this.baseSpeed * bumpImpulse;
+            this.vy = (by / bLen) * this.baseSpeed * bumpImpulse;
+
+            this.x = activeBumper.x + (bx / bLen) * (this.radius + activeBumper.radius + 2);
+            activeBumper.pulseTimer = 0.25;
+          }
+        }
+
+        // 1. Insel-Kollision im Primordial Sea Event (Prüfung auf Rechteck/Box)
+        if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
+          const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
+          const islandX1 = centerX - 35; // Erweiterte Hitbox für verlässliches Abprallen
+          const islandX2 = centerX + 35;
+          const islandY1 = waterLineY - 20;
+          const islandY2 = waterLineY + 10;
+
+          // Befindet sich das Pokémon in der Hitbox der Rettungsinsel?
+          if (this.x + this.radius >= islandX1 && this.x - this.radius <= islandX2 &&
+              this.y + this.radius >= islandY1 && this.y - this.radius <= islandY2) {
+            
+            // Reflektiere Y-Geschwindigkeit und drücke Pokémon nach oben ab
+            if (this.vy > 0) this.vy *= -1;
+            this.y = islandY1 - this.radius - 2;
+          } 
+          // Ansonsten: Wenn es unterhalb der Wasserlinie ist, stirbt es
+          else if (this.y + this.radius >= waterLineY) {
+            this.hp = 0;
+            eliminationOrder.push(this);
+            return;
+          }
+        }
+
+        // 2. Reguläre Arena-Wandkollision
+        const dx = this.x - centerX;
+        const dy = this.y - centerY;
+        const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
+        const currentAngle = Math.atan2(dy, dx);
+        const maxRadius = getWavyRadius(currentAngle);
+
+        if (distanceToCenter + this.radius > maxRadius) {
+          if (this.type === "bulk_up") {
+            if (this.canTriggerWave) {
+              this.energyPoints++;
+              if (this.energyPoints >= 2) {
+                this.energyPoints = 0;
+                this.canTriggerWave = false;
+                bulkUpWaves.push({
+                  x: this.x,
+                  y: this.y,
+                  radius: 10,
+                  maxRadius: initialArenaRadius * 1.5,
+                  speed: 50,
+                  damage: 25,
+                  ownerId: this.id,
+                  hitPokemonIds: []
+                });
+              }
+            }
+          }
+
+          const deltaA = 0.01;
+          const r1 = getWavyRadius(currentAngle - deltaA);
+          const r2 = getWavyRadius(currentAngle + deltaA);
+          const dr = (r2 - r1) / (2 * deltaA);
+
+          let nx = Math.cos(currentAngle) - (dr / maxRadius) * Math.sin(currentAngle);
+          let ny = Math.sin(currentAngle) + (dr / maxRadius) * Math.cos(currentAngle);
+          const nLen = Math.hypot(nx, ny) || 1;
+          nx /= nLen;
+          ny /= nLen;
+
+          const dot = this.vx * nx + this.vy * ny;
+          if (dot > 0) {
+            this.vx -= 2 * dot * nx;
+            this.vy -= 2 * dot * ny;
+          }
+
+          const currentLen = Math.hypot(this.vx, this.vy) || 1;
+          this.vx = (this.vx / currentLen) * this.baseSpeed;
+          this.vy = (this.vy / currentLen) * this.baseSpeed;
+
+          const correctedRadius = maxRadius - this.radius - 1;
+          this.x = centerX + Math.cos(currentAngle) * correctedRadius;
+          this.y = centerY + Math.sin(currentAngle) * correctedRadius;
+        } else {
+          if (this.type === "bulk_up") {
+            this.canTriggerWave = true;
+          }
+        }
+
+        if (this.attackCooldown > 0) {
+          this.attackCooldown -= deltaTime;
+        } else {
+          const target = this.findNearestEnemy();
+          if (target) {
+            this.attackEnemy(target);
+            let effectiveAttackSpeed = this.attackSpeed;
+            if (this.dragonDanceActive) {
+              effectiveAttackSpeed /= 2.0; 
+            }
+            this.attackCooldown = effectiveAttackSpeed;
+          }
+        }
+      }
+
+      findNearestEnemy() {
+        let nearest = null;
+        let minDist = Infinity;
+        activePokemons.forEach(enemy => {
+          if (enemy !== this && enemy.hp > 0) {
+            const dist = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+            if (dist <= this.attackRange && dist < minDist) {
+              minDist = dist;
+              nearest = enemy;
+            }
+          }
+        });
+        return nearest;
+      }
+
+      attackEnemy(target) {
+        let rawDmg = Math.max(3, this.attack - Math.floor(target.defense / 2));
+        if (this.bodySlamDebuff) rawDmg *= 0.70;
+
+        if (this.type === "long_reach") {
+          const dx = target.x - this.x;
+          const dy = target.y - this.y;
+          const angle = Math.atan2(dy, dx);
+          const endX = this.x + Math.cos(angle) * arenaRadius * 2;
+          const endY = this.y + Math.sin(angle) * arenaRadius * 2;
+
+          visualEffects.push({ type: "piercing_laser", x1: this.x, y1: this.y, x2: endX, y2: endY, timer: 0.25 });
+
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && p !== this) {
+              const distToLine = distanceToSegment({ x: p.x, y: p.y }, { x: this.x, y: this.y }, { x: endX, y: endY });
+              if (distToLine <= p.radius + 8) {
+                p.takeDamage(rawDmg * 1.5, this.id);
+                if (this.dragonDanceActive) {
+                  this.hp = Math.min(this.maxHp, this.hp + (rawDmg * 1.5) * 0.10);
+                }
+              }
+            }
+          });
+        } else {
+          projectiles.push(new Projectile(this.x, this.y, target, this.typeColor, rawDmg, this.type, this.id, this.dragonDanceActive));
+        }
+      }
+
+      takeDamage(amount, attackerId = null) {
+        if (amount <= 0 || this.hp <= 0) return;
+
+        const aliveList = activePokemons.filter(p => p.hp > 0);
+        if (aliveList.length === 1 && aliveList[0] === this) {
+          return; 
+        }
+
+        this.hp -= amount;
+
+        if (attackerId !== null && amount > 0) {
+          const attacker = activePokemons.find(p => p.id === attackerId);
+          if (attacker) attacker.totalDamageDealt += amount;
+        }
+
+        if (this.hp <= 0) {
+          this.hp = 0;
+          eliminationOrder.push(this);
+        }
+      }
+
+      draw() {
+        if (this.hp <= 0) return;
+
+        if (this.dragonDanceActive) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(139, 0, 0, 0.5)";
+          ctx.fill();
+        }
+
+        if (this.type === "blizzard") {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, 130, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(72, 219, 251, 0.12)";
+          ctx.fill();
+        }
+
+        if (this.type === "reflect") {
+          const orbDist = this.radius + 15;
+          const orbRadius = 6;
+          for (let i = 0; i < 2; i++) {
+            const angleOffset = i * Math.PI;
+            const ox = this.x + Math.cos(this.orbAngle + angleOffset) * orbDist;
+            const oy = this.y + Math.sin(this.orbAngle + angleOffset) * orbDist;
+
+            ctx.beginPath();
+            ctx.arc(ox, oy, orbRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#ff9ff3";
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        }
+
+        if (this.imageLoaded) {
+          ctx.drawImage(this.image, this.x - 22, this.y - 22, 44, 44);
+        } else {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+
+        if (this.curseStacks > 0) {
+          ctx.fillStyle = "#a29bfe";
+          ctx.font = "bold 11px Arial";
+          ctx.fillText("💀" + this.curseStacks, this.x + 18, this.y - 5);
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
+
+        const barWidth = 36;
+        const barHeight = 5;
+        const hpPercent = this.hp / this.maxHp;
+
+        ctx.fillStyle = "#cc0000";
+        ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
+        ctx.fillStyle = "#00ff66";
+        ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth * hpPercent, barHeight);
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
+
+        if (this.type === "bulk_up") {
+          const energyPercent = Math.min(1, this.energyPoints / 2);
+          ctx.fillStyle = "#222222";
+          ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
+          ctx.fillStyle = "#bde168"; 
+          ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth * energyPercent, 3);
+          ctx.strokeStyle = "#000000";
+          ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
+        }
+
+        let statusIcons = "";
+        if (this.dots.some(d => d.type === "flamethrower")) statusIcons += "🔥";
+        if (this.isSlowed) statusIcons += "❄️";
+        if (this.bodySlamDebuff) statusIcons += "🏳️";
+        if (this.dragonDanceActive) statusIcons += "💢";
+
+        if (statusIcons !== "") {
+          ctx.font = "12px Arial";
+          ctx.textAlign = "left";
+          ctx.fillText(statusIcons, this.x + barWidth / 2 + 3, this.y - this.radius);
+        }
+      }
+    }
+
+    class Projectile {
+      constructor(x, y, target, color, damage, specialType, shooterId, isDragonDance = false) {
+        this.x = x;
+        this.y = y;
+        this.target = target;
+        this.color = color;
+        this.damage = damage;
+        this.specialType = specialType;
+        this.shooterId = shooterId;
+        this.isDragonDance = isDragonDance;
+        this.baseSpeed = 5.0;
+        this.radius = 4;
+        this.hit = false;
+        this.targetX = target.x;
+        this.targetY = target.y;
+        this.angle = Math.atan2(target.y - y, target.x - x);
+      }
+
+      update() {
+        if (!this.target) {
+          this.hit = true;
+          return;
+        }
+
+        const tx = (this.target && this.target.hp > 0) ? this.target.x : this.targetX;
+        const ty = (this.target && this.target.hp > 0) ? this.target.y : this.targetY;
+
+        const dx = tx - this.x;
+        const dy = ty - this.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 0.001) this.angle = Math.atan2(dy, dx);
+
+        const currentSpeed = this.baseSpeed * speedMultiplier;
+        if (dist < currentSpeed) {
+          this.applyImpact();
+          this.hit = true;
+        } else {
+          this.x += (dx / dist) * currentSpeed;
+          this.y += (dy / dist) * currentSpeed;
+        }
+      }
+
+      applyImpact() {
+        if (this.target && this.target.hp > 0) {
+          let finalDmg = this.damage;
+
+          if (this.specialType === "sucker_punch" && Math.random() < 0.33) {
+            finalDmg *= 2.5;
+            visualEffects.push({ type: "crit_text", x: this.target.x, y: this.target.y - 15, timer: 0.5, text: "CRIT!" });
+          }
+
+          this.target.takeDamage(finalDmg, this.shooterId);
+
+          if (this.isDragonDance) {
+            const shooter = activePokemons.find(p => p.id === this.shooterId);
+            if (shooter && shooter.hp > 0) {
+              shooter.hp = Math.min(shooter.maxHp, shooter.hp + finalDmg * 0.25);
+            }
+          }
+
+          if (this.specialType === "flamethrower") this.target.applyDoT("flamethrower", 7, 5, this.shooterId);
+          if (this.specialType === "toxic") this.target.applyDoT("toxic", 0, 0, this.shooterId);
+          
+          if (this.specialType === "body_slam") {
+            if (this.target.type !== "body_slam") {
+              this.target.bodySlamDebuff = true;
+            }
+            const smallAoeRadius = 50;
+            visualEffects.push({ type: "circle_aoe", x: this.target.x, y: this.target.y, radius: smallAoeRadius, timer: 0.3, color: "rgba(116, 125, 140, 0.4)" });
+            activePokemons.forEach(p => {
+              if (p.hp > 0 && p.type !== "body_slam" && Math.hypot(p.x - this.target.x, p.y - this.target.y) <= smallAoeRadius) {
+                p.bodySlamDebuff = true;
+                if (p !== this.target) {
+                  p.takeDamage(finalDmg * 1, this.shooterId);
+                }
+              }
+            });
+          }
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+
+        if (this.specialType === "sucker_punch") {
+          ctx.beginPath();
+          ctx.moveTo(-8, 0);
+          ctx.lineTo(8, 0);
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(3, -4);
+          ctx.lineTo(9, 0);
+          ctx.lineTo(3, 4);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // ==========================================
+    // 6. HELFER & UI-STEUERUNG
+    // ==========================================
+    function distanceToSegment(p, v, w) {
+      const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+    }
+
+    function updateSpeedMultiplier(val) {
+      speedMultiplier = parseFloat(val);
+      document.getElementById("speedVal").innerText = speedMultiplier.toFixed(1) + "x";
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById("setupMenu");
+      if (menu.style.display === "none" || menu.style.display === "") {
+        menu.style.display = "block";
+      } else {
+        menu.style.display = "none";
+      }
+    }
+
+    function buildSelectionMenu() {
+      const container = document.getElementById("pokemonSelectionList");
+      container.innerHTML = "";
+      pokemonTemplates.forEach((p, idx) => {
+        const abilityColor = typeColors[p.type] || p.color;
+        const label = document.createElement("label");
+        label.className = "pokemon-option";
+        label.title = p.name;
+        label.style.borderColor = abilityColor;
+        label.innerHTML = `
+          <input type="checkbox" value="${idx}" style="accent-color: ${abilityColor};" checked>
+          <img src="${p.img}" alt="${p.name}">
+        `;
+        container.appendChild(label);
+      });
+    }
+
+    function selectAll(check) {
+      document.querySelectorAll("#pokemonSelectionList input").forEach(cb => cb.checked = check);
+    }
+
+    function updateLeaderboard() {
+      const lbContainer = document.getElementById("leaderboardList");
+      const sorted = [...activePokemons].sort((a, b) => b.totalDamageDealt - a.totalDamageDealt);
+
+      lbContainer.innerHTML = "";
+      sorted.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "lb-item";
+        item.innerHTML = `
+          <span class="lb-name">
+            <span style="display:inline-block; width:8px; height:8px; background:${p.typeColor}; border-radius:50%; flex-shrink:0;"></span>
+            ${p.name}
+          </span>
+          <span class="lb-dmg">${Math.floor(p.totalDamageDealt)}</span>
+        `;
+        lbContainer.appendChild(item);
+      });
+    }
+
+    function updatePlacementList() {
+      const placementContainer = document.getElementById("placementList");
+      const total = activePokemons.length;
+      const alive = activePokemons.filter(p => p.hp > 0);
+      const list = [];
+      
+      alive.forEach(p => list.push({ pokemon: p, isAlive: true }));
+      for (let i = eliminationOrder.length - 1; i >= 0; i--) {
+        list.push({ pokemon: eliminationOrder[i], isAlive: false, rank: total - i });
+      }
+
+      placementContainer.innerHTML = "";
+      list.forEach((item) => {
+        const rankText = item.isAlive ? (alive.length === 1 && eliminationOrder.length === total - 1 ? "#1" : "●") : `#${item.rank}`;
+        const div = document.createElement("div");
+        div.className = "place-item " + (item.isAlive ? "alive" : "dead");
+        div.innerHTML = `
+          <div class="place-info">
+            <span class="place-rank">${rankText}</span>
+            <span style="display:inline-block; width:8px; height:8px; background:${item.pokemon.typeColor}; border-radius:50%; flex-shrink:0;"></span>
+            <span style="font-weight: bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.pokemon.name}</span>
+          </div>
+          <span style="font-size:11px; color:#aaa; margin-left:4px;">${item.isAlive ? Math.ceil(item.pokemon.hp) + "HP" : "K.O."}</span>
+        `;
+        placementContainer.appendChild(div);
+      });
+    }
+
+    function startSelectedMatch() {
+      const selectedIndices = Array.from(document.querySelectorAll("#pokemonSelectionList input:checked"))
+                                   .map(cb => parseInt(cb.value));
+
+      if (selectedIndices.length < 2) {
+        alert("Wähle mindestens 2 Pokémon aus!");
+        return;
+      }
+
+      arenaRadius = initialArenaRadius;
+      battleTime = 0;
+      shrinkIntervalCount = 0;
+      waveAmplitude = 8;
+      waveFrequency = 6;
+      wavePhase = 0;
+
+      top10EventTriggered = false;
+      activeEventName = null;
+      currentArenaBorderColor = "#ffcb05";
+      waterRiseHeight = 0;
+      grassySurgeTimer = 0;
+      grassySurgeSecondHealDone = false;
+      sandStormTimer = 0;
+      sandStormRocks = [];
+
+      spawnBumper();
+
+      activePokemons = [];
+      projectiles = [];
+      visualEffects = [];
+      scorchTrails = [];
+      leechSeeds = [];
+      bulkUpWaves = [];
+      eliminationOrder = [];
+      gameOver = false;
+      matchStarted = true;
+      document.getElementById("winnerAnnounce").innerText = "Der Kampf läuft...";
+
+      selectedIndices.forEach((idx, id) => {
+        activePokemons.push(new Pokemon(pokemonTemplates[idx], id));
+      });
+
+      document.getElementById("setupMenu").style.display = "none";
+      updateLeaderboard();
+      updatePlacementList();
+    }
+
+    // ==========================================
+    // 7. RENDER- & SPIEL-SCHLEIFE
+    // ==========================================
+    function drawWavyArena() {
+      ctx.beginPath();
+      const steps = 180;
+      for (let i = 0; i <= steps; i++) {
+        const angle = (i / steps) * Math.PI * 2;
+        const r = getWavyRadius(angle);
+        const x = centerX + Math.cos(angle) * r;
+        const y = centerY + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = activeEventName === "Sand Storm" ? "#c2b28033" : "#22222b";
+      ctx.fill();
+
+      if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle = "rgba(41, 128, 185, 0.5)";
+        const waterY = centerY + initialArenaRadius - waterRiseHeight;
+        ctx.fillRect(centerX - initialArenaRadius, waterY, initialArenaRadius * 2, initialArenaRadius * 2);
+        
+        ctx.fillStyle = "#8b5a2b";
+        ctx.fillRect(centerX - 25, waterY - 10, 50, 15);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(centerX - 25, waterY - 10, 50, 15);
+
+        ctx.restore();
+      }
+
+      ctx.strokeStyle = currentArenaBorderColor;
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
+    function drawBumper() {
+      if (!activeBumper || activeEventName === "Primordial Sea") return;
+      if (activeBumper.pulseTimer > 0) activeBumper.pulseTimer -= 0.016 * speedMultiplier;
+
+      ctx.save();
+      ctx.translate(activeBumper.x, activeBumper.y);
+
+      if (activeBumper.pulseTimer > 0) {
+        ctx.beginPath();
+        ctx.arc(0, 0, activeBumper.radius + 6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 234, 167, 0.6)";
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, activeBumper.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#ff4757";
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, activeBumper.radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffcb05";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const deltaTime = ((timestamp - lastTime) / 1000) * speedMultiplier;
+      lastTime = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (matchStarted && !gameOver) {
+        battleTime += deltaTime;
+        const intervalsPassed = Math.floor(battleTime / 40);
+        if (intervalsPassed > shrinkIntervalCount) {
+          shrinkIntervalCount = intervalsPassed;
+          applyShrinkAndReshape();
+        }
+
+        if (activeEventName === "Grassy Surge" && !grassySurgeSecondHealDone) {
+          grassySurgeTimer += deltaTime;
+          if (grassySurgeTimer >= 25.0) {
+            grassySurgeSecondHealDone = true;
+            visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.3)" });
+            activePokemons.forEach(p => {
+              if (p.hp > 0) {
+                p.hp = Math.min(p.maxHp, p.hp + 100);
+                p.dots = [];
+                p.isSlowed = false;
+                p.bodySlamDebuff = false;
+                p.curseStacks = 0;
+              }
+            });
+          }
+        }
+
+        if (activeEventName === "Primordial Sea") {
+          waterRiseHeight += deltaTime * 5.0; 
+        }
+
+        if (activeEventName === "Sand Storm") {
+          sandStormTimer += deltaTime;
+          if (sandStormTimer >= 20.0) {
+            sandStormTimer = 0;
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.random() * (arenaRadius - 40);
+            sandStormRocks.push({
+              x: centerX + Math.cos(angle) * r,
+              y: centerY + Math.sin(angle) * r,
+              radius: 10
+            });
+          }
+        }
+
+        const aliveCount = activePokemons.filter(p => p.hp > 0).length;
+        if (!top10EventTriggered && aliveCount <= 10 && aliveCount > 1) {
+          triggerTop10Event();
+        }
+      }
+
+      drawWavyArena();
+      if (matchStarted) drawBumper();
+
+      if (matchStarted) {
+        if (activeEventName === "Sand Storm") {
+          for (let i = sandStormRocks.length - 1; i >= 0; i--) {
+            const rock = sandStormRocks[i];
+            ctx.beginPath();
+            ctx.arc(rock.x, rock.y, rock.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#8b5a2b";
+            ctx.fill();
+            ctx.strokeStyle = "#deb887";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            for (let p of activePokemons) {
+              if (p.hp > 0 && Math.hypot(p.x - rock.x, p.y - rock.y) <= p.radius + rock.radius) {
+                const isBuff = Math.random() < 0.5;
+                const stats = ["ATK", "DEF", "Move Speed", "Attack Speed", "Range"];
+                const chosenStat = stats[Math.floor(Math.random() * stats.length)];
+                
+                let textVal = "";
+                if (isBuff) {
+                  if (chosenStat === "ATK") { p.attack += 5; textVal = "+5 ATK"; }
+                  else if (chosenStat === "DEF") { p.defense += 5; textVal = "+5 DEF"; }
+                  else if (chosenStat === "Move Speed") { p.baseSpeed += 0.5; textVal = "+0.5 Move Speed"; }
+                  else if (chosenStat === "Attack Speed") { p.attackSpeed = Math.max(0.2, p.attackSpeed - 0.2); textVal = "-0.2 Attack Speed"; }
+                  else if (chosenStat === "Range") { p.attackRange += 10; textVal = "+10 Range"; }
+
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 2.5, text: textVal, color: "#2ed573" });
+                } else {
+                  if (chosenStat === "ATK") { p.attack = Math.max(5, p.attack - 5); textVal = "-5 ATK"; }
+                  else if (chosenStat === "DEF") { p.defense = Math.max(0, p.defense - 5); textVal = "-5 DEF"; }
+                  else if (chosenStat === "Move Speed") { p.baseSpeed = Math.max(0.2, p.baseSpeed - 0.5); textVal = "-0.5 Move Speed"; }
+                  else if (chosenStat === "Attack Speed") { p.attackSpeed += 0.2; textVal = "+0.2 Attack Speed"; }
+                  else if (chosenStat === "Range") { p.attackRange = Math.max(50, p.attackRange - 10); textVal = "-10 Range"; }
+
+                  visualEffects.push({ type: "crit_text", x: p.x, y: p.y - 20, timer: 2.5, text: textVal, color: "#ff4757" });
+                }
+
+                sandStormRocks.splice(i, 1);
+                break;
+              }
+            }
+          }
+        }
+
+        for (let i = scorchTrails.length - 1; i >= 0; i--) {
+          const trail = scorchTrails[i];
+          trail.timer -= deltaTime;
+          ctx.beginPath();
+          ctx.arc(trail.x, trail.y, trail.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 127, 80, ${Math.min(0.4, trail.timer / 10.0 * 0.4)})`;
+          ctx.fill();
+          if (trail.timer <= 0) scorchTrails.splice(i, 1);
+        }
+
+        for (let i = leechSeeds.length - 1; i >= 0; i--) {
+          const seed = leechSeeds[i];
+          ctx.save();
+          ctx.translate(seed.x, seed.y);
+          
+          ctx.beginPath();
+          ctx.moveTo(0, -9);
+          ctx.bezierCurveTo(7, -3, 8, 6, 0, 9);
+          ctx.bezierCurveTo(-8, 6, -7, -3, 0, -9);
+          ctx.fillStyle = "#2ed573";
+          ctx.fill();
+          ctx.strokeStyle = "#10ac84";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, -5);
+          ctx.lineTo(0, 5);
+          ctx.strokeStyle = "#7bed9f";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+
+          let seedHit = false;
+          for (let p of activePokemons) {
+            if (p.hp > 0 && Math.hypot(p.x - seed.x, p.y - seed.y) <= p.radius + seed.radius) {
+              if (p.id === seed.ownerId) {
+                p.hp = Math.min(p.maxHp, p.hp + 25);
+              } else {
+                p.takeDamage(50, seed.ownerId);
+              }
+              seedHit = true;
+              break;
+            }
+          }
+          if (seedHit) leechSeeds.splice(i, 1);
+        }
+
+        for (let i = bulkUpWaves.length - 1; i >= 0; i--) {
+          const wave = bulkUpWaves[i];
+          wave.radius += wave.speed * deltaTime * speedMultiplier;
+          
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(168, 230, 207, ${Math.max(0, 1 - wave.radius / wave.maxRadius)})`;
+          ctx.lineWidth = 5;
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = "#bde168";
+          ctx.stroke();
+          ctx.restore();
+
+          activePokemons.forEach(p => {
+            if (p.id !== wave.ownerId && p.hp > 0) {
+              if (wave.hitPokemonIds && wave.hitPokemonIds.includes(p.id)) return;
+
+              const d = Math.hypot(p.x - wave.x, p.y - wave.y);
+              if (Math.abs(d - wave.radius) < 15) {
+                p.takeDamage(wave.damage, wave.ownerId);
+                if (!wave.hitPokemonIds) wave.hitPokemonIds = [];
+                wave.hitPokemonIds.push(p.id);
+              }
+            }
+          });
+
+          if (wave.radius >= wave.maxRadius) {
+            bulkUpWaves.splice(i, 1);
+          }
+        }
+
+        const alivePokemons = activePokemons.filter(p => p.hp > 0);
+        if (alivePokemons.length <= 1 && !gameOver) {
+          gameOver = true;
+          const winnerAnnounce = document.getElementById("winnerAnnounce");
+          winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " gewinnt!" : "Unentschieden!";
+        }
+
+        activePokemons.forEach(pokemon => {
+          pokemon.update(deltaTime);
+          pokemon.draw();
+        });
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+          const proj = projectiles[i];
+          proj.update();
+          proj.draw();
+          if (proj.hit) projectiles.splice(i, 1);
+        }
+
+        for (let i = visualEffects.length - 1; i >= 0; i--) {
+          const fx = visualEffects[i];
+          fx.timer -= deltaTime;
+
+          if (fx.type === "circle_aoe") {
+            ctx.beginPath();
+            ctx.arc(fx.x, fx.y, fx.radius, 0, Math.PI * 2);
+            ctx.fillStyle = fx.color || "rgba(116, 125, 140, 0.5)";
+            ctx.fill();
+          } else if (fx.type === "piercing_laser") {
+            ctx.strokeStyle = "rgba(9, 132, 227, 0.8)";
+            ctx.lineWidth = 10;
+            ctx.beginPath();
+            ctx.moveTo(fx.x1, fx.y1);
+            ctx.lineTo(fx.x2, fx.y2);
+            ctx.stroke();
+          } else if (fx.type === "crit_text") {
+            ctx.fillStyle = fx.color || "#ff4d4d";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(fx.text || "CRIT!", fx.x, fx.y);
+          }
+
+          if (fx.timer <= 0) visualEffects.splice(i, 1);
+        }
+
+        const mins = Math.floor(battleTime / 60).toString().padStart(2, '0');
+        const secs = Math.floor(battleTime % 60).toString().padStart(2, '0');
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(`⏱️ ${mins}:${secs}`, canvas.width - 20, 30);
+
+        updateLeaderboard();
+        updatePlacementList();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    buildSelectionMenu();
+    requestAnimationFrame(gameLoop);
+  </script>
+
+</body>
+</html>
