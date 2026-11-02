@@ -330,6 +330,7 @@
     let grassySurgeTimer = 0; 
     let grassySurgeSecondHealDone = false;
     let sandStormTimer = 0;
+    let flameChargeBurnerId = null;
 
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
@@ -419,17 +420,18 @@
     }
 
     // ==========================================
-    // 4. TOP 10 EVENT SYSTEM LOGIK
+    // 4. TOP 20 EVENT SYSTEM LOGIK
     // ==========================================
     function triggerTop10Event() {
       top10EventTriggered = true;
       const roll = Math.random() * 100;
       
-      if (roll < 40) {
+      // Odds: Classic 50%, die anderen 5 jeweils 10%
+      if (roll < 50) {
         activeEventName = "Classic";
         currentArenaBorderColor = "#ffcb05";
         document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
-      } else if (roll < 55) {
+      } else if (roll < 60) {
         activeEventName = "Grassy Surge";
         currentArenaBorderColor = "#2ed573";
         document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
@@ -452,7 +454,7 @@
         currentArenaBorderColor = "#2980b9";
         document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
         waterRiseHeight = 0;
-      } else if (roll < 85) {
+      } else if (roll < 80) {
         activeEventName = "Trick Room";
         currentArenaBorderColor = "#ff9ff3";
         document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
@@ -471,12 +473,16 @@
           p.type = typesPool[idx];
           p.typeColor = typeColors[p.type] || p.color;
         });
-      } else {
+      } else if (roll < 90) {
         activeEventName = "Sand Storm";
         currentArenaBorderColor = "#c2b280";
         document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
         sandStormTimer = 0;
         sandStormRocks = [];
+      } else {
+        activeEventName = "Flame Charge";
+        currentArenaBorderColor = "#ff3303";
+        document.getElementById("winnerAnnounce").innerText = "🔥 Flame Charge Event!";
       }
     }
 
@@ -502,6 +508,9 @@
 
         this.totalDamageDealt = 0;
         this.isSlowed = false;
+
+        this.kills = 0;
+        this.scaleFactor = 1.0;
 
         this.dots = [];
         this.toxicStacks = [];
@@ -569,6 +578,12 @@
         }
 
         let effectiveSpeed = this.baseSpeed;
+
+        // Reduktion um 35% (Speed ist nur noch 65%) während der 5 Spezial-Events
+        if (activeEventName && activeEventName !== "Classic") {
+          effectiveSpeed *= 0.65;
+        }
+
         if (this.dragonDanceActive) {
           effectiveSpeed *= 3.0;
         }
@@ -708,26 +723,22 @@
           }
         }
 
-        // 1. Insel-Kollision im Primordial Sea Event (Prüfung auf Rechteck/Box)
+        // 1. Insel-Kollision im Primordial Sea Event
         if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
           const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
-          const islandX1 = centerX - 35; // Erweiterte Hitbox für verlässliches Abprallen
+          const islandX1 = centerX - 35;
           const islandX2 = centerX + 35;
           const islandY1 = waterLineY - 20;
           const islandY2 = waterLineY + 10;
 
-          // Befindet sich das Pokémon in der Hitbox der Rettungsinsel?
           if (this.x + this.radius >= islandX1 && this.x - this.radius <= islandX2 &&
               this.y + this.radius >= islandY1 && this.y - this.radius <= islandY2) {
             
-            // Reflektiere Y-Geschwindigkeit und drücke Pokémon nach oben ab
             if (this.vy > 0) this.vy *= -1;
             this.y = islandY1 - this.radius - 2;
           } 
-          // Ansonsten: Wenn es unterhalb der Wasserlinie ist, stirbt es
           else if (this.y + this.radius >= waterLineY) {
-            this.hp = 0;
-            eliminationOrder.push(this);
+            this.takeDamage(this.hp + 999, null);
             return;
           }
         }
@@ -867,6 +878,22 @@
         if (this.hp <= 0) {
           this.hp = 0;
           eliminationOrder.push(this);
+
+          // Flame Charge & general Kill-Buff Logik
+          if (attackerId !== null && attackerId !== this.id) {
+            const killer = activePokemons.find(p => p.id === attackerId);
+            if (killer && killer.hp > 0) {
+              killer.kills++;
+              killer.radius *= 1.10;
+              killer.scaleFactor *= 1.10;
+              killer.hp += 25;
+              killer.attackRange += 10;
+
+              if (killer.kills >= 6) {
+                flameChargeBurnerId = killer.id;
+              }
+            }
+          }
         }
       }
 
@@ -905,13 +932,21 @@
           }
         }
 
+        const imgSize = 44 * (this.scaleFactor || 1.0);
         if (this.imageLoaded) {
-          ctx.drawImage(this.image, this.x - 22, this.y - 22, 44, 44);
+          ctx.drawImage(this.image, this.x - imgSize / 2, this.y - imgSize / 2, imgSize, imgSize);
         } else {
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
           ctx.fillStyle = this.color;
           ctx.fill();
+        }
+
+        if (this.kills > 0) {
+          ctx.fillStyle = "#ffd432";
+          ctx.font = "bold 13px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("⚡".repeat(this.kills), this.x, this.y - this.radius - 20);
         }
 
         if (this.curseStacks > 0) {
@@ -925,9 +960,9 @@
         ctx.textAlign = "center";
         ctx.fillText(this.name, this.x, this.y - this.radius - 8);
 
-        const barWidth = 36;
+        const barWidth = 36 * (this.scaleFactor || 1.0);
         const barHeight = 5;
-        const hpPercent = this.hp / this.maxHp;
+        const hpPercent = Math.min(1.0, this.hp / this.maxHp);
 
         ctx.fillStyle = "#cc0000";
         ctx.fillRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
@@ -1189,6 +1224,7 @@
       grassySurgeSecondHealDone = false;
       sandStormTimer = 0;
       sandStormRocks = [];
+      flameChargeBurnerId = null;
 
       spawnBumper();
 
@@ -1227,7 +1263,7 @@
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = activeEventName === "Sand Storm" ? "#c2b28033" : "#22222b";
+      ctx.fillStyle = activeEventName === "Sand Storm" ? "#c2b28033" : (activeEventName === "Flame Charge" ? "#ff330322" : "#22222b");
       ctx.fill();
 
       if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
@@ -1331,8 +1367,17 @@
           }
         }
 
+        if (flameChargeBurnerId !== null) {
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && p.id !== flameChargeBurnerId) {
+              p.takeDamage(1.0 * deltaTime, flameChargeBurnerId);
+            }
+          });
+        }
+
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
-        if (!top10EventTriggered && aliveCount <= 16 && aliveCount > 1) {
+        // Event triggert nun schon ab 20 verbleibenden Pokémon
+        if (!top10EventTriggered && aliveCount <= 20 && aliveCount > 1) {
           triggerTop10Event();
         }
       }
