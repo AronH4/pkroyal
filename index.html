@@ -423,13 +423,12 @@
     }
 
     // ==========================================
-    // 4. EVENT SYSTEM LOGIK (Mit Behemoth Bash)
+    // 4. EVENT SYSTEM LOGIK
     // ==========================================
     function triggerTop10Event() {
       top10EventTriggered = true;
       const roll = Math.random() * 100;
       
-      // Odds: Classic 40%, die anderen 6 jeweils 10%
       if (roll < 40) {
         activeEventName = "Classic";
         currentArenaBorderColor = "#ffcb05";
@@ -489,9 +488,7 @@
       } else {
         activeEventName = "Behemoth Bash";
         currentArenaBorderColor = "#a0a0a0";
-        document.getElementById("winnerAnnounce").innerText = "🛡️ Behemoth Bash Event!";
-        
-        // Zacian in der Mitte spawnen
+        document.getElementById("winnerAnnounce").innerText = "🗡️ Behemoth Bash Event!";
         behemothZacian = new Zacian(centerX, centerY);
       }
     }
@@ -506,9 +503,9 @@
         this.radius = 22;
         this.vx = 0;
         this.vy = 0;
-        this.speed = 6.0; // Hohe Geschwindigkeit beim Dash
+        this.speed = 6.0; // Reduzierte Dash-Geschwindigkeit auf 6.0
         this.isDashing = false;
-        this.dashTimer = 15.0; // Startet nach 15 Sekunden den ersten Dash
+        this.dashTimer = 15.0;
         this.targetX = x;
         this.targetY = y;
 
@@ -522,7 +519,6 @@
         this.dashTimer -= deltaTime;
 
         if (!this.isDashing && this.dashTimer <= 0) {
-          // Führendes Pokémon nach HP finden
           const alive = activePokemons.filter(p => p.hp > 0);
           if (alive.length > 0) {
             alive.sort((a, b) => b.hp - a.hp);
@@ -535,21 +531,19 @@
             this.vy = Math.sin(angle) * this.speed;
             this.isDashing = true;
           }
-          this.dashTimer = 15.0; // Nächster Dash in 15 Sekunden
+          this.dashTimer = 15.0;
         }
 
         if (this.isDashing) {
           this.x += this.vx * speedMultiplier;
           this.y += this.vy * speedMultiplier;
 
-          // Kollision mit Pokémon während des Dashes prüfen
           activePokemons.forEach(p => {
             if (p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) <= p.radius + this.radius) {
               p.takeDamage(50, null);
             }
           });
 
-          // Prüfen, ob Zacian die Arena-Wand erreicht hat
           const dx = this.x - centerX;
           const dy = this.y - centerY;
           const distToCenter = Math.hypot(dx, dy);
@@ -557,7 +551,6 @@
           const maxRadius = getWavyRadius(currentAngle);
 
           if (distToCenter + this.radius >= maxRadius) {
-            // Bleibt an der Wand kleben
             this.x = centerX + Math.cos(currentAngle) * (maxRadius - this.radius - 2);
             this.y = centerY + Math.sin(currentAngle) * (maxRadius - this.radius - 2);
             this.isDashing = false;
@@ -678,7 +671,6 @@
 
         let effectiveSpeed = this.baseSpeed;
 
-        // Reduktion um 35% (Speed ist nur noch 65%) während allen 6 Spezial-Events
         if (activeEventName && activeEventName !== "Classic") {
           effectiveSpeed *= 0.65;
         }
@@ -853,7 +845,8 @@
           if (this.type === "bulk_up") {
             if (this.canTriggerWave) {
               this.energyPoints++;
-              if (this.energyPoints >= 2) {
+              // ÄNDERUNG: Nun werden 4 Stacks benötigt!
+              if (this.energyPoints >= 4) {
                 this.energyPoints = 0;
                 this.canTriggerWave = false;
                 bulkUpWaves.push({
@@ -885,15 +878,6 @@
           if (dot > 0) {
             this.vx -= 2 * dot * nx;
             this.vy -= 2 * dot * ny;
-          }
-
-          // WICHTIGE ANPASSUNG FÜR BULK UP: Schräger abprallen, um Wand-Entlanghangeln zu verhindern!
-          if (this.type === "bulk_up") {
-            const randomDeviation = (Math.random() - 0.5) * 0.8; // Zusätzlicher zufälliger Streuwinkel
-            const currentActualAngle = Math.atan2(this.vy, this.vx) + randomDeviation;
-            const currentSpeedMag = Math.hypot(this.vx, this.vy) || this.baseSpeed;
-            this.vx = Math.cos(currentActualAngle) * currentSpeedMag;
-            this.vy = Math.sin(currentActualAngle) * currentSpeedMag;
           }
 
           const currentLen = Math.hypot(this.vx, this.vy) || 1;
@@ -1079,8 +1063,9 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
+        // ÄNDERUNG: Anzeige skaliert nun auf 4 Stacks
         if (this.type === "bulk_up") {
-          const energyPercent = Math.min(1, this.energyPoints / 2);
+          const energyPercent = Math.min(1, this.energyPoints / 4);
           ctx.fillStyle = "#222222";
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
           ctx.fillStyle = "#bde168"; 
