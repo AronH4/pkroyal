@@ -488,7 +488,7 @@
       } else {
         activeEventName = "Behemoth Bash";
         currentArenaBorderColor = "#a0a0a0";
-        document.getElementById("winnerAnnounce").innerText = "🗡️ Behemoth Bash Event!";
+        document.getElementById("winnerAnnounce").innerText = "🛡️ Behemoth Bash Event!";
         behemothZacian = new Zacian(centerX, centerY);
       }
     }
@@ -503,7 +503,7 @@
         this.radius = 22;
         this.vx = 0;
         this.vy = 0;
-        this.speed = 6.0; // Reduzierte Dash-Geschwindigkeit auf 6.0
+        this.speed = 6.0;
         this.isDashing = false;
         this.dashTimer = 15.0;
         this.targetX = x;
@@ -845,8 +845,8 @@
           if (this.type === "bulk_up") {
             if (this.canTriggerWave) {
               this.energyPoints++;
-              // ÄNDERUNG: Nun werden 4 Stacks benötigt!
-              if (this.energyPoints >= 4) {
+              // Wieder zurück auf 2 Stacks für die Schockwelle
+              if (this.energyPoints >= 2) {
                 this.energyPoints = 0;
                 this.canTriggerWave = false;
                 bulkUpWaves.push({
@@ -880,9 +880,18 @@
             this.vy -= 2 * dot * ny;
           }
 
-          const currentLen = Math.hypot(this.vx, this.vy) || 1;
-          this.vx = (this.vx / currentLen) * this.baseSpeed;
-          this.vy = (this.vy / currentLen) * this.baseSpeed;
+          // WICHTIG: Bulk-Up Pokémon prallen nun wie ein Bumper ab (kräftiger Rückstoß von der Wand weg)
+          if (this.type === "bulk_up") {
+            const wallDirX = -Math.cos(currentAngle);
+            const wallDirY = -Math.sin(currentAngle);
+            const bumpImpulse = 1.3;
+            this.vx = wallDirX * this.baseSpeed * bumpImpulse;
+            this.vy = wallDirY * this.baseSpeed * bumpImpulse;
+          } else {
+            const currentLen = Math.hypot(this.vx, this.vy) || 1;
+            this.vx = (this.vx / currentLen) * this.baseSpeed;
+            this.vy = (this.vy / currentLen) * this.baseSpeed;
+          }
 
           const correctedRadius = maxRadius - this.radius - 1;
           this.x = centerX + Math.cos(currentAngle) * correctedRadius;
@@ -1063,9 +1072,9 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
-        // ÄNDERUNG: Anzeige skaliert nun auf 4 Stacks
+        // Anzeige skaliert wieder auf 2 Stacks zurück
         if (this.type === "bulk_up") {
-          const energyPercent = Math.min(1, this.energyPoints / 4);
+          const energyPercent = Math.min(1, this.energyPoints / 2);
           ctx.fillStyle = "#222222";
           ctx.fillRect(this.x - barWidth / 2, this.y - this.radius + 2, barWidth, 3);
           ctx.fillStyle = "#bde168"; 
