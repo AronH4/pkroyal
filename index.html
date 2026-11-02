@@ -503,7 +503,7 @@
         this.radius = 22;
         this.vx = 0;
         this.vy = 0;
-        this.speed = 3.0; // Angepasster Speed auf 3.0
+        this.speed = 1.0;
         this.isDashing = false;
         this.dashTimer = 15.0;
         this.targetX = x;
@@ -993,13 +993,13 @@
             const killer = activePokemons.find(p => p.id === attackerId);
             if (killer && killer.hp > 0) {
               killer.kills++;
-              killer.radius *= 1.10;
+              killer.radius *= 1.20;
               killer.scaleFactor *= 1.10;
               killer.hp += 25;
               killer.attackRange += 10;
 
               // Arena brennt bereits ab 4 Kills
-              if (killer.kills >= 4) {
+              if (killer.kills >= 3) {
                 flameChargeBurnerId = killer.id;
               }
             }
