@@ -1332,7 +1332,7 @@
         }
 
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
-        if (!top10EventTriggered && aliveCount <= 10 && aliveCount > 1) {
+        if (!top10EventTriggered && aliveCount <= 16 && aliveCount > 1) {
           triggerTop10Event();
         }
       }
