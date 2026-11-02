@@ -504,7 +504,7 @@
         this.vy = 0;
         this.speed = 1.0;
         this.isDashing = false;
-        this.dashTimer = 10.0;
+        this.dashTimer = 8.0;
         this.targetX = x;
         this.targetY = y;
 
@@ -542,7 +542,7 @@
             if (p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) <= p.radius + this.radius) {
               // Prüfen, ob dieses Pokémon in diesem Dash bereits getroffen wurde
               if (!this.hitPokemonIds.has(p.id)) {
-                p.takeDamage(50, null);
+                p.takeDamage(75, null);
                 this.hitPokemonIds.add(p.id); // Pokémon für diesen Dash sperren
               }
             }
