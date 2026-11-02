@@ -332,8 +332,7 @@
     let sandStormTimer = 0;
     let flameChargeBurnerId = null;
 
-    // Behemoth Bash (Zacian) Objekt
-    let behemothZacian = null;
+    let bashMelmetal = null;
 
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
@@ -486,17 +485,17 @@
         currentArenaBorderColor = "#ff3303";
         document.getElementById("winnerAnnounce").innerText = "🔥 Flame Charge Event!";
       } else {
-        activeEventName = "Behemoth Bash";
+        activeEventName = "Double Iron Bash";
         currentArenaBorderColor = "#a0a0a0";
-        document.getElementById("winnerAnnounce").innerText = "🗡️ Behemoth Bash Event!";
-        behemothZacian = new Zacian(centerX, centerY);
+        document.getElementById("winnerAnnounce").innerText = "🔩 Double Iron Bash!";
+        bashMelmetal = new Melmetal(centerX, centerY);
       }
     }
 
     // ==========================================
-    // 5. ZACIAN KLASSE (FÜR BEHEMOTH BASH)
+    // 5. MELMETAL
     // ==========================================
-    class Zacian {
+    class Melmetal {
       constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -511,7 +510,7 @@
 
         this.imageLoaded = false;
         this.image = new Image();
-        this.image.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10188.png";
+        this.image.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/809.png";
         this.image.onload = () => { this.imageLoaded = true; };
       }
 
@@ -574,7 +573,7 @@
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 11px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("Zacian", this.x, this.y - this.radius - 5);
+        ctx.fillText("Melmetal", this.x, this.y - this.radius - 5);
       }
     }
 
@@ -1335,7 +1334,7 @@
       sandStormTimer = 0;
       sandStormRocks = [];
       flameChargeBurnerId = null;
-      behemothZacian = null;
+      bashMelmetal = null;
 
       spawnBumper();
 
@@ -1468,7 +1467,7 @@
         }
 
         if (activeEventName === "Primordial Sea") {
-          waterRiseHeight += deltaTime * 5.0; 
+          waterRiseHeight += deltaTime * 6.0; 
         }
 
         if (activeEventName === "Sand Storm") {
@@ -1493,8 +1492,8 @@
           });
         }
 
-        if (behemothZacian) {
-          behemothZacian.update(deltaTime);
+        if (bashMelmetal) {
+          bashMelmetal.update(deltaTime);
         }
 
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
@@ -1507,8 +1506,8 @@
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
-        if (behemothZacian) {
-          behemothZacian.draw();
+        if (bashMelmetal) {
+          bashMelmetal.draw();
         }
 
         if (activeEventName === "Sand Storm") {
