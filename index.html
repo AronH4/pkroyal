@@ -332,6 +332,9 @@
     let sandStormTimer = 0;
     let flameChargeBurnerId = null;
 
+    // Behemoth Bash (Zacian) Objekt
+    let behemothZacian = null;
+
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
     // ==========================================
@@ -420,18 +423,18 @@
     }
 
     // ==========================================
-    // 4. TOP 20 EVENT SYSTEM LOGIK
+    // 4. EVENT SYSTEM LOGIK (Mit Behemoth Bash)
     // ==========================================
     function triggerTop10Event() {
       top10EventTriggered = true;
       const roll = Math.random() * 100;
       
-      // Odds: Classic 50%, die anderen 5 jeweils 10%
-      if (roll < 50) {
+      // Odds: Classic 40%, die anderen 6 jeweils 10%
+      if (roll < 40) {
         activeEventName = "Classic";
         currentArenaBorderColor = "#ffcb05";
         document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
-      } else if (roll < 60) {
+      } else if (roll < 50) {
         activeEventName = "Grassy Surge";
         currentArenaBorderColor = "#2ed573";
         document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
@@ -449,12 +452,12 @@
             p.curseStacks = 0;
           }
         });
-      } else if (roll < 70) {
+      } else if (roll < 60) {
         activeEventName = "Primordial Sea";
         currentArenaBorderColor = "#2980b9";
         document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
         waterRiseHeight = 0;
-      } else if (roll < 80) {
+      } else if (roll < 70) {
         activeEventName = "Trick Room";
         currentArenaBorderColor = "#ff9ff3";
         document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
@@ -473,21 +476,117 @@
           p.type = typesPool[idx];
           p.typeColor = typeColors[p.type] || p.color;
         });
-      } else if (roll < 90) {
+      } else if (roll < 80) {
         activeEventName = "Sand Storm";
         currentArenaBorderColor = "#c2b280";
         document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
         sandStormTimer = 0;
         sandStormRocks = [];
-      } else {
+      } else if (roll < 90) {
         activeEventName = "Flame Charge";
         currentArenaBorderColor = "#ff3303";
         document.getElementById("winnerAnnounce").innerText = "🔥 Flame Charge Event!";
+      } else {
+        activeEventName = "Behemoth Bash";
+        currentArenaBorderColor = "#a0a0a0";
+        document.getElementById("winnerAnnounce").innerText = "🛡️ Behemoth Bash Event!";
+        
+        // Zacian in der Mitte spawnen
+        behemothZacian = new Zacian(centerX, centerY);
       }
     }
 
     // ==========================================
-    // 5. KLASSEN (POKEMON & PROJEKTIL)
+    // 5. ZACIAN KLASSE (FÜR BEHEMOTH BASH)
+    // ==========================================
+    class Zacian {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 22;
+        this.vx = 0;
+        this.vy = 0;
+        this.speed = 12.0; // Hohe Geschwindigkeit beim Dash
+        this.isDashing = false;
+        this.dashTimer = 15.0; // Startet nach 15 Sekunden den ersten Dash
+        this.targetX = x;
+        this.targetY = y;
+
+        this.imageLoaded = false;
+        this.image = new Image();
+        this.image.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10188.png";
+        this.image.onload = () => { this.imageLoaded = true; };
+      }
+
+      update(deltaTime) {
+        this.dashTimer -= deltaTime;
+
+        if (!this.isDashing && this.dashTimer <= 0) {
+          // Führendes Pokémon nach HP finden
+          const alive = activePokemons.filter(p => p.hp > 0);
+          if (alive.length > 0) {
+            alive.sort((a, b) => b.hp - a.hp);
+            const leader = alive[0];
+            this.targetX = leader.x;
+            this.targetY = leader.y;
+
+            const angle = Math.atan2(this.targetY - this.y, this.targetX - this.x);
+            this.vx = Math.cos(angle) * this.speed;
+            this.vy = Math.sin(angle) * this.speed;
+            this.isDashing = true;
+          }
+          this.dashTimer = 15.0; // Nächster Dash in 15 Sekunden
+        }
+
+        if (this.isDashing) {
+          this.x += this.vx * speedMultiplier;
+          this.y += this.vy * speedMultiplier;
+
+          // Kollision mit Pokémon während des Dashes prüfen
+          activePokemons.forEach(p => {
+            if (p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) <= p.radius + this.radius) {
+              p.takeDamage(50, null);
+            }
+          });
+
+          // Prüfen, ob Zacian die Arena-Wand erreicht hat
+          const dx = this.x - centerX;
+          const dy = this.y - centerY;
+          const distToCenter = Math.hypot(dx, dy);
+          const currentAngle = Math.atan2(dy, dx);
+          const maxRadius = getWavyRadius(currentAngle);
+
+          if (distToCenter + this.radius >= maxRadius) {
+            // Bleibt an der Wand kleben
+            this.x = centerX + Math.cos(currentAngle) * (maxRadius - this.radius - 2);
+            this.y = centerY + Math.sin(currentAngle) * (maxRadius - this.radius - 2);
+            this.isDashing = false;
+            this.vx = 0;
+            this.vy = 0;
+          }
+        }
+      }
+
+      draw() {
+        const imgSize = 52;
+        if (this.imageLoaded) {
+          ctx.drawImage(this.image, this.x - imgSize / 2, this.y - imgSize / 2, imgSize, imgSize);
+        } else {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fillStyle = "#00cec9";
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 11px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Zacian", this.x, this.y - this.radius - 5);
+      }
+    }
+
+    // ==========================================
+    // 6. KLASSEN (POKEMON & PROJEKTIL)
     // ==========================================
     class Pokemon {
       constructor(template, id) {
@@ -579,7 +678,7 @@
 
         let effectiveSpeed = this.baseSpeed;
 
-        // Reduktion um 35% (Speed ist nur noch 65%) während allen 5 Spezial-Events
+        // Reduktion um 35% (Speed ist nur noch 65%) während allen 6 Spezial-Events
         if (activeEventName && activeEventName !== "Classic") {
           effectiveSpeed *= 0.65;
         }
@@ -788,6 +887,15 @@
             this.vy -= 2 * dot * ny;
           }
 
+          // WICHTIGE ANPASSUNG FÜR BULK UP: Schräger abprallen, um Wand-Entlanghangeln zu verhindern!
+          if (this.type === "bulk_up") {
+            const randomDeviation = (Math.random() - 0.5) * 0.8; // Zusätzlicher zufälliger Streuwinkel
+            const currentActualAngle = Math.atan2(this.vy, this.vx) + randomDeviation;
+            const currentSpeedMag = Math.hypot(this.vx, this.vy) || this.baseSpeed;
+            this.vx = Math.cos(currentActualAngle) * currentSpeedMag;
+            this.vy = Math.sin(currentActualAngle) * currentSpeedMag;
+          }
+
           const currentLen = Math.hypot(this.vx, this.vy) || 1;
           this.vx = (this.vx / currentLen) * this.baseSpeed;
           this.vy = (this.vy / currentLen) * this.baseSpeed;
@@ -879,7 +987,6 @@
           this.hp = 0;
           eliminationOrder.push(this);
 
-          // Buffs bei Kills finden EXKLUSIV im Flame Charge Event statt!
           if (activeEventName === "Flame Charge" && attackerId !== null && attackerId !== this.id) {
             const killer = activePokemons.find(p => p.id === attackerId);
             if (killer && killer.hp > 0) {
@@ -1108,7 +1215,7 @@
     }
 
     // ==========================================
-    // 6. HELFER & UI-STEUERUNG
+    // 7. HELFER & UI-STEUERUNG
     // ==========================================
     function distanceToSegment(p, v, w) {
       const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
@@ -1225,6 +1332,7 @@
       sandStormTimer = 0;
       sandStormRocks = [];
       flameChargeBurnerId = null;
+      behemothZacian = null;
 
       spawnBumper();
 
@@ -1249,7 +1357,7 @@
     }
 
     // ==========================================
-    // 7. RENDER- & SPIEL-SCHLEIFE
+    // 8. RENDER- & SPIEL-SCHLEIFE
     // ==========================================
     function drawWavyArena() {
       ctx.beginPath();
@@ -1264,8 +1372,6 @@
       }
       ctx.closePath();
       
-      // Arena-Farbe: Normalerweise dunkel (#22222b).
-      // Erst wenn im Flame Charge Event ein Pokémon brennt (6 Kills hat), fängt die Arena an zu brennen!
       if (activeEventName === "Sand Storm") {
         ctx.fillStyle = "#c2b28033";
       } else if (activeEventName === "Flame Charge" && flameChargeBurnerId !== null) {
@@ -1384,6 +1490,10 @@
           });
         }
 
+        if (behemothZacian) {
+          behemothZacian.update(deltaTime);
+        }
+
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
         if (!top10EventTriggered && aliveCount <= 20 && aliveCount > 1) {
           triggerTop10Event();
@@ -1394,6 +1504,10 @@
       if (matchStarted) drawBumper();
 
       if (matchStarted) {
+        if (behemothZacian) {
+          behemothZacian.draw();
+        }
+
         if (activeEventName === "Sand Storm") {
           for (let i = sandStormRocks.length - 1; i >= 0; i--) {
             const rock = sandStormRocks[i];
