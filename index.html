@@ -512,6 +512,7 @@
         this.image = new Image();
         this.image.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/809.png";
         this.image.onload = () => { this.imageLoaded = true; };
+        this.hitPokemonIds = new Set(); // Speichert die IDs der Pokémon, die im aktuellen Dash bereits getroffen wurden
       }
 
       update(deltaTime) {
@@ -539,7 +540,11 @@
 
           activePokemons.forEach(p => {
             if (p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) <= p.radius + this.radius) {
-              p.takeDamage(50, null);
+              // Prüfen, ob dieses Pokémon in diesem Dash bereits getroffen wurde
+              if (!this.hitPokemonIds.has(p.id)) {
+                p.takeDamage(50, null);
+                this.hitPokemonIds.add(p.id); // Pokémon für diesen Dash sperren
+              }
             }
           });
 
@@ -555,6 +560,7 @@
             this.isDashing = false;
             this.vx = 0;
             this.vy = 0;
+            this.hitPokemonIds.clear(); // Liste beim Beenden des Dashes zurücksetzen
           }
         }
       }
