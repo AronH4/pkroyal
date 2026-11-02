@@ -503,7 +503,7 @@
         this.radius = 22;
         this.vx = 0;
         this.vy = 0;
-        this.speed = 6.0;
+        this.speed = 3.0; // Angepasster Speed auf 3.0
         this.isDashing = false;
         this.dashTimer = 15.0;
         this.targetX = x;
@@ -845,7 +845,6 @@
           if (this.type === "bulk_up") {
             if (this.canTriggerWave) {
               this.energyPoints++;
-              // Wieder zurück auf 2 Stacks für die Schockwelle
               if (this.energyPoints >= 2) {
                 this.energyPoints = 0;
                 this.canTriggerWave = false;
@@ -855,7 +854,7 @@
                   radius: 10,
                   maxRadius: initialArenaRadius * 1.5,
                   speed: 50,
-                  damage: 25,
+                  damage: 20, // Schaden auf 20 angepasst
                   ownerId: this.id,
                   hitPokemonIds: []
                 });
@@ -880,13 +879,23 @@
             this.vy -= 2 * dot * ny;
           }
 
-          // WICHTIG: Bulk-Up Pokémon prallen nun wie ein Bumper ab (kräftiger Rückstoß von der Wand weg)
+          // Bulk-Up Abprall mit zufälligem 5 bis 25 Grad Winkelversatz
           if (this.type === "bulk_up") {
             const wallDirX = -Math.cos(currentAngle);
             const wallDirY = -Math.sin(currentAngle);
+            const baseBounceAngle = Math.atan2(wallDirY, wallDirX);
+            
+            // Zufälliger Offset zwischen 5 und 25 Grad (in Bogenmaß umgerechnet)
+            const degMin = 5;
+            const degMax = 25;
+            const randomDeg = degMin + Math.random() * (degMax - degMin);
+            const randomRad = (randomDeg * Math.PI) / 180 * (Math.random() < 0.5 ? 1 : -1);
+            
+            const finalAngle = baseBounceAngle + randomRad;
             const bumpImpulse = 1.3;
-            this.vx = wallDirX * this.baseSpeed * bumpImpulse;
-            this.vy = wallDirY * this.baseSpeed * bumpImpulse;
+            
+            this.vx = Math.cos(finalAngle) * this.baseSpeed * bumpImpulse;
+            this.vy = Math.sin(finalAngle) * this.baseSpeed * bumpImpulse;
           } else {
             const currentLen = Math.hypot(this.vx, this.vy) || 1;
             this.vx = (this.vx / currentLen) * this.baseSpeed;
@@ -989,7 +998,8 @@
               killer.hp += 25;
               killer.attackRange += 10;
 
-              if (killer.kills >= 6) {
+              // Arena brennt bereits ab 4 Kills
+              if (killer.kills >= 4) {
                 flameChargeBurnerId = killer.id;
               }
             }
@@ -1072,7 +1082,6 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(this.x - barWidth / 2, this.y - this.radius - 5, barWidth, barHeight);
 
-        // Anzeige skaliert wieder auf 2 Stacks zurück
         if (this.type === "bulk_up") {
           const energyPercent = Math.min(1, this.energyPoints / 2);
           ctx.fillStyle = "#222222";
