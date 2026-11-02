@@ -579,7 +579,7 @@
 
         let effectiveSpeed = this.baseSpeed;
 
-        // Reduktion um 35% (Speed ist nur noch 65%) während der 5 Spezial-Events
+        // Reduktion um 35% (Speed ist nur noch 65%) während allen 5 Spezial-Events
         if (activeEventName && activeEventName !== "Classic") {
           effectiveSpeed *= 0.65;
         }
@@ -879,8 +879,8 @@
           this.hp = 0;
           eliminationOrder.push(this);
 
-          // Flame Charge & general Kill-Buff Logik
-          if (attackerId !== null && attackerId !== this.id) {
+          // Buffs bei Kills finden EXKLUSIV im Flame Charge Event statt!
+          if (activeEventName === "Flame Charge" && attackerId !== null && attackerId !== this.id) {
             const killer = activePokemons.find(p => p.id === attackerId);
             if (killer && killer.hp > 0) {
               killer.kills++;
@@ -1263,7 +1263,16 @@
         else ctx.lineTo(x, y);
       }
       ctx.closePath();
-      ctx.fillStyle = activeEventName === "Sand Storm" ? "#c2b28033" : (activeEventName === "Flame Charge" ? "#ff330322" : "#22222b");
+      
+      // Arena-Farbe: Normalerweise dunkel (#22222b).
+      // Erst wenn im Flame Charge Event ein Pokémon brennt (6 Kills hat), fängt die Arena an zu brennen!
+      if (activeEventName === "Sand Storm") {
+        ctx.fillStyle = "#c2b28033";
+      } else if (activeEventName === "Flame Charge" && flameChargeBurnerId !== null) {
+        ctx.fillStyle = "#ff330333";
+      } else {
+        ctx.fillStyle = "#22222b";
+      }
       ctx.fill();
 
       if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
@@ -1367,7 +1376,7 @@
           }
         }
 
-        if (flameChargeBurnerId !== null) {
+        if (activeEventName === "Flame Charge" && flameChargeBurnerId !== null) {
           activePokemons.forEach(p => {
             if (p.hp > 0 && p.id !== flameChargeBurnerId) {
               p.takeDamage(1.0 * deltaTime, flameChargeBurnerId);
@@ -1376,7 +1385,6 @@
         }
 
         const aliveCount = activePokemons.filter(p => p.hp > 0).length;
-        // Event triggert nun schon ab 20 verbleibenden Pokémon
         if (!top10EventTriggered && aliveCount <= 20 && aliveCount > 1) {
           triggerTop10Event();
         }
