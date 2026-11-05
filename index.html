@@ -18,13 +18,16 @@
       box-sizing: border-box;
     }
 
-    /* Fester Container gegen Verschieben der Elemente */
+    /* Fester Header-Container gegen Pixel-Verschiebungen */
     #headerContainer {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
-      max-width: 1100px;
+      max-width: 1024px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
     }
 
     h1 {
@@ -66,7 +69,7 @@
       text-align: center;
     }
 
-    /* Verbreitertes Setup-Menü für 15 Pokémon & Events in einer Reihe */
+    /* Setup-Menü exakt abgestimmt für 15 Pokémon in einer Reihe */
     #setupMenu {
       display: none;
       background-color: #2b2b36;
@@ -75,7 +78,7 @@
       padding: 15px 20px;
       margin-bottom: 15px;
       width: 100%;
-      max-width: 1100px;
+      max-width: 1024px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       transition: all 0.3s ease;
       box-sizing: border-box;
@@ -106,7 +109,7 @@
       opacity: 0.4;
       transition: all 0.2s ease;
       box-sizing: border-box;
-      width: 58px; /* Sorgt exakt für 15 Items in 1100px Container */
+      width: 58px; /* Exakt 15 Items pro Zeile im 1024px Layout */
     }
 
     .pokemon-option:has(input:checked) {
@@ -276,6 +279,7 @@
       gap: 6px;
       max-height: 250px;
       overflow-y: auto;
+      transition: all 0.3s ease;
     }
 
     .stat-bar-row {
@@ -344,7 +348,7 @@
 </head>
 <body>
 
-  <!-- Header-Container verhindert Verschieben der Elemente beim Menüausklappen -->
+  <!-- Header-Container schützt vor Layout-Shift beim Menüausklappen -->
   <div id="headerContainer">
     <h1>PK Royal</h1>
 
@@ -362,7 +366,6 @@
 
     <div id="setupMenu">
       <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
-      <!-- 5) Alle Events in einer Reihe mit neuen Bezeichnungen -->
       <div class="event-grid" id="eventSelectionList">
         <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
         <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
@@ -388,11 +391,14 @@
       <h3>🏆 Placement</h3>
       <div id="placementList"></div>
       
-      <!-- Säulendiagramm unten links -->
+      <!-- Ability Siege mit Toggle-Funktion -->
       <div style="border-top: 1px solid #2a75bb; padding-top: 10px; margin-top: 5px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span style="font-weight: bold; color: #ffcb05; font-size: 13px;">📊 Ability Siege</span>
-          <button class="secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetAbilityStats()">Reset</button>
+          <div style="display: flex; gap: 4px;">
+            <button class="secondary" style="padding: 2px 6px; font-size: 11px;" onclick="toggleAbilityStatsView()" title="Ein-/Ausblenden">👁️</button>
+            <button class="secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetAbilityStats()">Reset</button>
+          </div>
         </div>
         <div id="abilityStatsChart"></div>
       </div>
@@ -644,40 +650,20 @@
         currentArenaBorderColor = "#ff9ff3";
         document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
 
+        activePokemons.forEach(p => {
+          if (p.hp > 0) {
+            p.baseSpeed *= 0.65; 
+          }
+        });
+
+        // REVERT: Nur Abilities werden getauscht, Stats bleiben bei den Pokemon!
         const aliveList = activePokemons.filter(p => p.hp > 0);
+        const typesPool = aliveList.map(p => p.type);
+        typesPool.sort(() => Math.random() - 0.5);
         
-        // 2) Tausch-Pakete inkl. aller Stats erstellen
-        const swapPackages = aliveList.map(p => ({
-          type: p.type,
-          typeColor: p.typeColor,
-          attack: p.attack,
-          defense: p.defense,
-          baseSpeed: p.baseSpeed,
-          attackSpeed: p.attackSpeed,
-          attackRange: p.attackRange,
-          maxHp: p.maxHp,
-          color: p.color,
-          imgSrc: p.image.src
-        }));
-
-        // Zuweisungen durchmischen
-        swapPackages.sort(() => Math.random() - 0.5);
-        
-        // Stats & Ability zuweisen
         aliveList.forEach((p, idx) => {
-          const pack = swapPackages[idx];
-          p.type = pack.type;
-          p.typeColor = pack.typeColor;
-          p.attack = pack.attack;
-          p.defense = pack.defense;
-          p.baseSpeed = pack.baseSpeed;
-          p.attackSpeed = pack.attackSpeed;
-          p.attackRange = pack.attackRange;
-          p.maxHp = pack.maxHp;
-          p.color = pack.color;
-          p.image.src = pack.imgSrc;
-
-          p.baseSpeed *= 0.65; // Verlangsamung nach dem Tausch anwenden
+          p.type = typesPool[idx];
+          p.typeColor = typeColors[p.type] || p.color;
         });
       } else if (chosenEvent === "Sand Storm") {
         currentArenaBorderColor = "#c2b280";
@@ -801,7 +787,7 @@
         this.attackSpeed = template.attackSpeed;
         this.attackRange = template.attackRange;
         this.type = template.type;
-        // 1) Merken der ursprünglichen Fähigkeit für den statistikfesten Counter
+        // Speichern der ursprünglichen Fähigkeit für den Counter
         this.originalType = template.type; 
         this.attackCooldown = 0;
         this.radius = 20;
@@ -1128,7 +1114,6 @@
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
 
-            // 3) Attack Speed während Events auf 65% reduzieren (Cooldown wird verlängert)
             if (activeEventName && activeEventName !== "Classic") {
               effectiveAttackSpeed /= 0.65;
             }
@@ -1456,6 +1441,16 @@
       }
     }
 
+    // Toggle-Funktion für das Säulendiagramm
+    function toggleAbilityStatsView() {
+      const chart = document.getElementById("abilityStatsChart");
+      if (chart.style.display === "none") {
+        chart.style.display = "flex";
+      } else {
+        chart.style.display = "none";
+      }
+    }
+
     function buildSelectionMenu() {
       const container = document.getElementById("pokemonSelectionList");
       container.innerHTML = "";
@@ -1524,7 +1519,6 @@
       });
     }
 
-    // Funktionen für das Säulendiagramm & Reset
     function updateAbilityStatsChart() {
       const chartContainer = document.getElementById("abilityStatsChart");
       chartContainer.innerHTML = "";
@@ -1888,7 +1882,7 @@
             const winner = alivePokemons[0];
             winnerAnnounce.innerText = "🏆 " + winner.name + " gewinnt!";
             
-            // 1) Zähle im Counter die ursprüngliche Ability des Pokémon hoch!
+            // Verwendet starr die Ursprungs-Fähigkeit für den Zähler (z.B. Pikachu -> Thunderbolt)
             const trackedAbility = winner.originalType || winner.type;
             if (abilityWinStats[trackedAbility] !== undefined) {
               abilityWinStats[trackedAbility]++;
