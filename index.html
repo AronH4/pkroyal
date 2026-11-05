@@ -41,6 +41,7 @@
       padding: 10px 20px;
       border-radius: 10px;
       border: 1px solid #2a75bb;
+      box-sizing: border-box;
     }
 
     .speed-control {
@@ -66,6 +67,7 @@
       max-width: 900px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       transition: all 0.3s ease;
+      box-sizing: border-box;
     }
 
     .pokemon-grid {
@@ -173,6 +175,9 @@
       width: 440px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .side-panel h3 {
@@ -181,6 +186,7 @@
       color: #ffcb05;
       border-bottom: 1px solid #2a75bb;
       padding-bottom: 8px;
+      margin-bottom: 0;
     }
 
     #leaderboardList, #placementList {
@@ -249,12 +255,83 @@
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+
+    /* Styling für das Statistik-Säulendiagramm */
+    #abilityStatsChart {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .stat-bar-row {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      gap: 8px;
+    }
+
+    .stat-bar-label {
+      width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+    }
+
+    .stat-bar-track {
+      flex: 1;
+      background: #1e1e24;
+      height: 12px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #444;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .stat-bar-count {
+      width: 25px;
+      text-align: right;
+      color: #aaa;
+    }
+
+    /* Event Checkboxen im Setup Menü */
+    .event-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+
+    .event-option {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #1e1e24;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .event-option input {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <!-- 5) Geänderte Reihenfolge der oberen Elemente -->
   <h1>PK Royal</h1>
-  <div id="winnerAnnounce">Get Ready!</div>
 
   <div id="topControls">
     <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
@@ -266,8 +343,22 @@
     <button onclick="startSelectedMatch()">⚔️ GO!</button>
   </div>
 
+  <div id="winnerAnnounce">Get Ready!</div>
+
   <div id="setupMenu">
-    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Selection:</div>
+    <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
+    <div class="event-grid" id="eventSelectionList">
+      <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
+      <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
+      <label class="event-option"><input type="checkbox" value="Grassy Surge" class="event-chk" checked> Grassy</label>
+      <label class="event-option"><input type="checkbox" value="Trick Room" class="event-chk" checked> Trick Room</label>
+      <label class="event-option"><input type="checkbox" value="Primordial Sea" class="event-chk" checked> Primordial</label>
+      <label class="event-option"><input type="checkbox" value="Sand Storm" class="event-chk" checked> Sand</label>
+      <label class="event-option"><input type="checkbox" value="Flame Charge" class="event-chk" checked> Flame</label>
+      <label class="event-option"><input type="checkbox" value="Double Iron Bash" class="event-chk" checked> Double Iron Bash</label>
+    </div>
+
+    <div style="font-weight: bold; text-align: center; margin-top: 15px; margin-bottom: 5px;">Pokemon Selection:</div>
     <div class="pokemon-grid" id="pokemonSelectionList"></div>
     <div class="button-group">
       <button class="secondary" onclick="selectAll(true)">All</button>
@@ -279,6 +370,15 @@
     <div id="placementPanel" class="side-panel">
       <h3>🏆 Placement</h3>
       <div id="placementList"></div>
+      
+      <!-- 6) Neues Säulendiagramm unten links -->
+      <div style="border-top: 1px solid #2a75bb; padding-top: 10px; margin-top: 5px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-weight: bold; color: #ffcb05; font-size: 13px;">📊 Ability Siege</span>
+          <button class="secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetAbilityStats()">Reset</button>
+        </div>
+        <div id="abilityStatsChart"></div>
+      </div>
     </div>
 
     <canvas id="arenaCanvas" width="750" height="750"></canvas>
@@ -331,8 +431,23 @@
     let grassySurgeSecondHealDone = false;
     let sandStormTimer = 0;
     let flameChargeBurnerId = null;
-
     let bashMelmetal = null;
+
+    // 6) Statistik-Speicher für gewonnene Abilites
+    let abilityWinStats = {
+      flamethrower: 0,
+      thunderbolt: 0,
+      blizzard: 0,
+      sucker_punch: 0,
+      toxic: 0,
+      body_slam: 0,
+      long_reach: 0,
+      earthquake: 0,
+      reflect: 0,
+      leech_seed: 0,
+      dragon_dance: 0,
+      bulk_up: 0
+    };
 
     // ==========================================
     // 2. DATENBANK & TYPEN-FARBEN
@@ -350,6 +465,21 @@
       leech_seed: "#23d46c",
       dragon_dance: "#8b0000",
       bulk_up: "#bde168"
+    };
+
+    const typeDisplayNames = {
+      flamethrower: "Flamethrower",
+      thunderbolt: "Thunderbolt",
+      blizzard: "Blizzard",
+      sucker_punch: "Sucker Punch",
+      toxic: "Toxic",
+      body_slam: "Body Slam",
+      long_reach: "Long Reach",
+      earthquake: "Earthquake",
+      reflect: "Reflect",
+      leech_seed: "Leech Seed",
+      dragon_dance: "Dragon Dance",
+      bulk_up: "Bulk Up"
     };
 
     const pokemonTemplates = [
@@ -424,19 +554,61 @@
     // ==========================================
     // 4. EVENT SYSTEM LOGIK
     // ==========================================
+    function handleStandardToggle(chk) {
+      const eventChks = document.querySelectorAll(".event-chk");
+      eventChks.forEach(c => {
+        c.checked = chk.checked;
+      });
+    }
+
     function triggerTop10Event() {
       top10EventTriggered = true;
-      const roll = Math.random() * 100;
       
-      if (roll < 40) {
+      // 7) Dynamische Event-Auswahl je nach User-Toggles
+      const standardChecked = document.getElementById("chkStandard").checked;
+      const eventChks = document.querySelectorAll(".event-chk");
+      const enabledEvents = [];
+      eventChks.forEach(c => {
+        if (c.checked) enabledEvents.push(c.value);
+      });
+
+      if (enabledEvents.length === 0) {
         activeEventName = "Classic";
         currentArenaBorderColor = "#ffcb05";
         document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
-      } else if (roll < 50) {
-        activeEventName = "Grassy Surge";
+        return;
+      }
+
+      let chosenEvent = "Classic";
+
+      if (standardChecked) {
+        const roll = Math.random() * 100;
+        if (roll < 40) chosenEvent = "Classic";
+        else if (roll < 50 && enabledEvents.includes("Grassy Surge")) chosenEvent = "Grassy Surge";
+        else if (roll < 60 && enabledEvents.includes("Primordial Sea")) chosenEvent = "Primordial Sea";
+        else if (roll < 70 && enabledEvents.includes("Trick Room")) chosenEvent = "Trick Room";
+        else if (roll < 80 && enabledEvents.includes("Sand Storm")) chosenEvent = "Sand Storm";
+        else if (roll < 90 && enabledEvents.includes("Flame Charge")) chosenEvent = "Flame Charge";
+        else if (enabledEvents.includes("Double Iron Bash")) chosenEvent = "Double Iron Bash";
+        else {
+          chosenEvent = enabledEvents[Math.floor(Math.random() * enabledEvents.length)];
+        }
+      } else {
+        // Gleichmäßiges Verhältnis aller aktivierten Events
+        const index = Math.floor(Math.random() * enabledEvents.length);
+        chosenEvent = enabledEvents[index];
+      }
+
+      activeEventName = chosenEvent;
+
+      if (chosenEvent === "Classic") {
+        currentArenaBorderColor = "#ffcb05";
+        document.getElementById("winnerAnnounce").innerText = "Event: Classic!";
+      } else if (chosenEvent === "Grassy Surge") {
         currentArenaBorderColor = "#2ed573";
         document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
-        visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.4)" });
+        // 1) Langsamerer/längerer Grassy Surge Effekt (Timer von 1.0 auf 2.5 Sekunden verlängert)
+        visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 2.5, color: "rgba(46, 213, 115, 0.4)" });
         
         grassySurgeTimer = 0;
         grassySurgeSecondHealDone = false;
@@ -450,13 +622,11 @@
             p.curseStacks = 0;
           }
         });
-      } else if (roll < 60) {
-        activeEventName = "Primordial Sea";
+      } else if (chosenEvent === "Primordial Sea") {
         currentArenaBorderColor = "#2980b9";
         document.getElementById("winnerAnnounce").innerText = "🌊 Primordial Sea Event!";
         waterRiseHeight = 0;
-      } else if (roll < 70) {
-        activeEventName = "Trick Room";
+      } else if (chosenEvent === "Trick Room") {
         currentArenaBorderColor = "#ff9ff3";
         document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
         
@@ -467,25 +637,46 @@
         });
 
         const aliveList = activePokemons.filter(p => p.hp > 0);
+        
+        // 2) Abilites UND Stats werden komplett getauscht
+        const statPool = aliveList.map(p => ({
+          attack: p.attack,
+          defense: p.defense,
+          baseSpeed: p.baseSpeed,
+          attackSpeed: p.attackSpeed,
+          attackRange: p.attackRange,
+          maxHp: p.maxHp,
+          color: p.color,
+          img: p.image.src
+        }));
         const typesPool = aliveList.map(p => p.type);
+
+        statPool.sort(() => Math.random() - 0.5);
         typesPool.sort(() => Math.random() - 0.5);
         
         aliveList.forEach((p, idx) => {
           p.type = typesPool[idx];
           p.typeColor = typeColors[p.type] || p.color;
+
+          const newStats = statPool[idx];
+          p.attack = newStats.attack;
+          p.defense = newStats.defense;
+          p.baseSpeed = newStats.baseSpeed;
+          p.attackSpeed = newStats.attackSpeed;
+          p.attackRange = newStats.attackRange;
+          p.maxHp = newStats.maxHp;
+          p.color = newStats.color;
+          p.image.src = newStats.img;
         });
-      } else if (roll < 80) {
-        activeEventName = "Sand Storm";
+      } else if (chosenEvent === "Sand Storm") {
         currentArenaBorderColor = "#c2b280";
         document.getElementById("winnerAnnounce").innerText = "🌪️ Sand Storm Event!";
         sandStormTimer = 0;
         sandStormRocks = [];
-      } else if (roll < 90) {
-        activeEventName = "Flame Charge";
+      } else if (chosenEvent === "Flame Charge") {
         currentArenaBorderColor = "#ff3303";
         document.getElementById("winnerAnnounce").innerText = "🔥 Flame Charge Event!";
-      } else {
-        activeEventName = "Double Iron Bash";
+      } else if (chosenEvent === "Double Iron Bash") {
         currentArenaBorderColor = "#a0a0a0";
         document.getElementById("winnerAnnounce").innerText = "🔩 Double Iron Bash!";
         bashMelmetal = new Melmetal(centerX, centerY);
@@ -512,7 +703,7 @@
         this.image = new Image();
         this.image.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/809.png";
         this.image.onload = () => { this.imageLoaded = true; };
-        this.hitPokemonIds = new Set(); // Speichert die IDs der Pokémon, die im aktuellen Dash bereits getroffen wurden
+        this.hitPokemonIds = new Set();
       }
 
       update(deltaTime) {
@@ -540,10 +731,9 @@
 
           activePokemons.forEach(p => {
             if (p.hp > 0 && Math.hypot(p.x - this.x, p.y - this.y) <= p.radius + this.radius) {
-              // Prüfen, ob dieses Pokémon in diesem Dash bereits getroffen wurde
               if (!this.hitPokemonIds.has(p.id)) {
                 p.takeDamage(75, null);
-                this.hitPokemonIds.add(p.id); // Pokémon für diesen Dash sperren
+                this.hitPokemonIds.add(p.id);
               }
             }
           });
@@ -560,7 +750,7 @@
             this.isDashing = false;
             this.vx = 0;
             this.vy = 0;
-            this.hitPokemonIds.clear(); // Liste beim Beenden des Dashes zurücksetzen
+            this.hitPokemonIds.clear();
           }
         }
       }
@@ -819,7 +1009,6 @@
           }
         }
 
-        // 1. Insel-Kollision im Primordial Sea Event
         if (activeEventName === "Primordial Sea" && waterRiseHeight > 0) {
           const waterLineY = centerY + initialArenaRadius - waterRiseHeight;
           const islandX1 = centerX - 35;
@@ -839,7 +1028,6 @@
           }
         }
 
-        // 2. Reguläre Arena-Wandkollision
         const dx = this.x - centerX;
         const dy = this.y - centerY;
         const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
@@ -859,7 +1047,7 @@
                   radius: 10,
                   maxRadius: initialArenaRadius * 1.5,
                   speed: 50,
-                  damage: 20, // Schaden auf 20 angepasst
+                  damage: 20,
                   ownerId: this.id,
                   hitPokemonIds: []
                 });
@@ -884,13 +1072,11 @@
             this.vy -= 2 * dot * ny;
           }
 
-          // Bulk-Up Abprall mit zufälligem 5 bis 25 Grad Winkelversatz
           if (this.type === "bulk_up") {
             const wallDirX = -Math.cos(currentAngle);
             const wallDirY = -Math.sin(currentAngle);
             const baseBounceAngle = Math.atan2(wallDirY, wallDirX);
             
-            // Zufälliger Offset zwischen 5 und 25 Grad (in Bogenmaß umgerechnet)
             const degMin = 5;
             const degMax = 25;
             const randomDeg = degMin + Math.random() * (degMax - degMin);
@@ -1003,7 +1189,6 @@
               killer.hp += 25;
               killer.attackRange += 10;
 
-              // Arena brennt bereits ab 4 Kills
               if (killer.kills >= 3) {
                 flameChargeBurnerId = killer.id;
               }
@@ -1144,7 +1329,13 @@
 
         if (dist > 0.001) this.angle = Math.atan2(dy, dx);
 
-        const currentSpeed = this.baseSpeed * speedMultiplier;
+        // 3) Attack Speed / Projektilgeschwindigkeit auf 65% gedrosselt, sofern Event aktiv
+        let currentProjSpeed = this.baseSpeed;
+        if (activeEventName && activeEventName !== "Classic") {
+          currentProjSpeed *= 0.65;
+        }
+        const currentSpeed = currentProjSpeed * speedMultiplier;
+
         if (dist < currentSpeed) {
           this.applyImpact();
           this.hit = true;
@@ -1315,6 +1506,41 @@
       });
     }
 
+    // 6) Funktionen für das Säulendiagramm & Reset
+    function updateAbilityStatsChart() {
+      const chartContainer = document.getElementById("abilityStatsChart");
+      chartContainer.innerHTML = "";
+
+      // Sortiere absteigend nach Anzahl der Siege
+      const sortedAbilities = Object.keys(abilityWinStats).sort((a, b) => abilityWinStats[b] - abilityWinStats[a]);
+      const maxVal = Math.max(...Object.values(abilityWinStats), 1);
+
+      sortedAbilities.forEach(abilityKey => {
+        const count = abilityWinStats[abilityKey];
+        const color = typeColors[abilityKey] || "#ffffff";
+        const displayName = typeDisplayNames[abilityKey] || abilityKey;
+        const percentage = (count / maxVal) * 100;
+
+        const row = document.createElement("div");
+        row.className = "stat-bar-row";
+        row.innerHTML = `
+          <span class="stat-bar-label" title="${displayName}">${displayName}</span>
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+          </div>
+          <span class="stat-bar-count">${count}</span>
+        `;
+        chartContainer.appendChild(row);
+      });
+    }
+
+    function resetAbilityStats() {
+      for (let key in abilityWinStats) {
+        abilityWinStats[key] = 0;
+      }
+      updateAbilityStatsChart();
+    }
+
     function startSelectedMatch() {
       const selectedIndices = Array.from(document.querySelectorAll("#pokemonSelectionList input:checked"))
                                    .map(cb => parseInt(cb.value));
@@ -1459,7 +1685,8 @@
           grassySurgeTimer += deltaTime;
           if (grassySurgeTimer >= 25.0) {
             grassySurgeSecondHealDone = true;
-            visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 1.0, color: "rgba(46, 213, 115, 0.3)" });
+            // 1) Langsamerer/längerer Grassy Surge Effekt
+            visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 2.5, color: "rgba(46, 213, 115, 0.3)" });
             activePokemons.forEach(p => {
               if (p.hp > 0) {
                 p.hp = Math.min(p.maxHp, p.hp + 100);
@@ -1641,7 +1868,19 @@
         if (alivePokemons.length <= 1 && !gameOver) {
           gameOver = true;
           const winnerAnnounce = document.getElementById("winnerAnnounce");
-          winnerAnnounce.innerText = alivePokemons.length === 1 ? "🏆 " + alivePokemons[0].name + " gewinnt!" : "Unentschieden!";
+          if (alivePokemons.length === 1) {
+            const winner = alivePokemons[0];
+            winnerAnnounce.innerText = "🏆 " + winner.name + " gewinnt!";
+            // 6) Sieg für Ability in Statistik eintragen
+            if (abilityWinStats[winner.type] !== undefined) {
+              abilityWinStats[winner.type]++;
+            } else {
+              abilityWinStats[winner.type] = 1;
+            }
+            updateAbilityStatsChart();
+          } else {
+            winnerAnnounce.innerText = "Unentschieden!";
+          }
         }
 
         activePokemons.forEach(pokemon => {
@@ -1697,6 +1936,7 @@
     }
 
     buildSelectionMenu();
+    updateAbilityStatsChart();
     requestAnimationFrame(gameLoop);
   </script>
 
