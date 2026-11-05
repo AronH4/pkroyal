@@ -18,18 +18,18 @@
       box-sizing: border-box;
     }
 
+    /* Fester Container gegen Verschieben der Elemente */
+    #headerContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
     h1 {
       margin-top: 0;
       margin-bottom: 5px;
-    }
-
-    #winnerAnnounce {
-      font-size: 24px;
-      font-weight: bold;
-      color: #ffcb05;
-      height: 35px;
-      margin-bottom: 10px;
-      text-shadow: 0 0 10px rgba(255, 203, 5, 0.4);
     }
 
     #topControls {
@@ -56,15 +56,26 @@
       cursor: pointer;
     }
 
+    #winnerAnnounce {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffcb05;
+      height: 35px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px rgba(255, 203, 5, 0.4);
+      text-align: center;
+    }
+
+    /* Verbreitertes Setup-Menü für 15 Pokémon & Events in einer Reihe */
     #setupMenu {
       display: none;
       background-color: #2b2b36;
       border: 2px solid #2a75bb;
       border-radius: 12px;
-      padding: 15px 25px;
+      padding: 15px 20px;
       margin-bottom: 15px;
       width: 100%;
-      max-width: 900px;
+      max-width: 1100px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       transition: all 0.3s ease;
       box-sizing: border-box;
@@ -94,6 +105,8 @@
       user-select: none;
       opacity: 0.4;
       transition: all 0.2s ease;
+      box-sizing: border-box;
+      width: 58px; /* Sorgt exakt für 15 Items in 1100px Container */
     }
 
     .pokemon-option:has(input:checked) {
@@ -256,7 +269,7 @@
       text-overflow: ellipsis;
     }
 
-    /* Styling für das Statistik-Säulendiagramm */
+    /* Säulendiagramm Styling */
     #abilityStatsChart {
       display: flex;
       flex-direction: column;
@@ -300,11 +313,11 @@
       color: #aaa;
     }
 
-    /* Event Checkboxen im Setup Menü */
+    /* Event Checkboxen in einer Reihe */
     .event-grid {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      flex-wrap: nowrap;
+      gap: 6px;
       justify-content: center;
       margin-top: 5px;
       margin-bottom: 10px;
@@ -313,14 +326,15 @@
     .event-option {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       background: #1e1e24;
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 6px;
       border: 1px solid #555;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
 
     .event-option input {
@@ -330,39 +344,42 @@
 </head>
 <body>
 
-  <!-- 5) Geänderte Reihenfolge der oberen Elemente -->
-  <h1>PK Royal</h1>
+  <!-- Header-Container verhindert Verschieben der Elemente beim Menüausklappen -->
+  <div id="headerContainer">
+    <h1>PK Royal</h1>
 
-  <div id="topControls">
-    <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
-    <div class="speed-control">
-      <span>Speed:</span>
-      <input type="range" id="speedSlider" min="1.0" max="9.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
-      <span id="speedVal">1.0x</span>
-    </div>
-    <button onclick="startSelectedMatch()">⚔️ GO!</button>
-  </div>
-
-  <div id="winnerAnnounce">Get Ready!</div>
-
-  <div id="setupMenu">
-    <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
-    <div class="event-grid" id="eventSelectionList">
-      <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
-      <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
-      <label class="event-option"><input type="checkbox" value="Grassy Surge" class="event-chk" checked> Grassy</label>
-      <label class="event-option"><input type="checkbox" value="Trick Room" class="event-chk" checked> Trick Room</label>
-      <label class="event-option"><input type="checkbox" value="Primordial Sea" class="event-chk" checked> Primordial</label>
-      <label class="event-option"><input type="checkbox" value="Sand Storm" class="event-chk" checked> Sand</label>
-      <label class="event-option"><input type="checkbox" value="Flame Charge" class="event-chk" checked> Flame</label>
-      <label class="event-option"><input type="checkbox" value="Double Iron Bash" class="event-chk" checked> Double Iron Bash</label>
+    <div id="topControls">
+      <button id="toggleMenuBtn" class="secondary" onclick="toggleMenu()">⚙️</button>
+      <div class="speed-control">
+        <span>Speed:</span>
+        <input type="range" id="speedSlider" min="1.0" max="9.0" step="1.0" value="1.0" oninput="updateSpeedMultiplier(this.value)">
+        <span id="speedVal">1.0x</span>
+      </div>
+      <button onclick="startSelectedMatch()">⚔️ GO!</button>
     </div>
 
-    <div style="font-weight: bold; text-align: center; margin-top: 15px; margin-bottom: 5px;">Pokemon Selection:</div>
-    <div class="pokemon-grid" id="pokemonSelectionList"></div>
-    <div class="button-group">
-      <button class="secondary" onclick="selectAll(true)">All</button>
-      <button class="secondary" onclick="selectAll(false)">None</button>
+    <div id="winnerAnnounce">Get Ready!</div>
+
+    <div id="setupMenu">
+      <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
+      <!-- 5) Alle Events in einer Reihe mit neuen Bezeichnungen -->
+      <div class="event-grid" id="eventSelectionList">
+        <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
+        <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
+        <label class="event-option"><input type="checkbox" value="Grassy Surge" class="event-chk" checked> Grassy</label>
+        <label class="event-option"><input type="checkbox" value="Trick Room" class="event-chk" checked> Trick</label>
+        <label class="event-option"><input type="checkbox" value="Primordial Sea" class="event-chk" checked> Sea</label>
+        <label class="event-option"><input type="checkbox" value="Sand Storm" class="event-chk" checked> Sand</label>
+        <label class="event-option"><input type="checkbox" value="Flame Charge" class="event-chk" checked> Flame</label>
+        <label class="event-option"><input type="checkbox" value="Double Iron Bash" class="event-chk" checked> Bash</label>
+      </div>
+
+      <div style="font-weight: bold; text-align: center; margin-top: 15px; margin-bottom: 5px;">Pokemon Selection:</div>
+      <div class="pokemon-grid" id="pokemonSelectionList"></div>
+      <div class="button-group">
+        <button class="secondary" onclick="selectAll(true)">All</button>
+        <button class="secondary" onclick="selectAll(false)">None</button>
+      </div>
     </div>
   </div>
 
@@ -371,7 +388,7 @@
       <h3>🏆 Placement</h3>
       <div id="placementList"></div>
       
-      <!-- 6) Neues Säulendiagramm unten links -->
+      <!-- Säulendiagramm unten links -->
       <div style="border-top: 1px solid #2a75bb; padding-top: 10px; margin-top: 5px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <span style="font-weight: bold; color: #ffcb05; font-size: 13px;">📊 Ability Siege</span>
@@ -433,7 +450,7 @@
     let flameChargeBurnerId = null;
     let bashMelmetal = null;
 
-    // 6) Statistik-Speicher für gewonnene Abilites
+    // Statistik-Speicher für gewonnene Abilites
     let abilityWinStats = {
       flamethrower: 0,
       thunderbolt: 0,
@@ -564,7 +581,6 @@
     function triggerTop10Event() {
       top10EventTriggered = true;
       
-      // 7) Dynamische Event-Auswahl je nach User-Toggles
       const standardChecked = document.getElementById("chkStandard").checked;
       const eventChks = document.querySelectorAll(".event-chk");
       const enabledEvents = [];
@@ -594,7 +610,6 @@
           chosenEvent = enabledEvents[Math.floor(Math.random() * enabledEvents.length)];
         }
       } else {
-        // Gleichmäßiges Verhältnis aller aktivierten Events
         const index = Math.floor(Math.random() * enabledEvents.length);
         chosenEvent = enabledEvents[index];
       }
@@ -607,7 +622,6 @@
       } else if (chosenEvent === "Grassy Surge") {
         currentArenaBorderColor = "#2ed573";
         document.getElementById("winnerAnnounce").innerText = "🌱 Grassy Surge Event!";
-        // 1) Langsamerer/längerer Grassy Surge Effekt (Timer von 1.0 auf 2.5 Sekunden verlängert)
         visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 2.5, color: "rgba(46, 213, 115, 0.4)" });
         
         grassySurgeTimer = 0;
@@ -629,17 +643,13 @@
       } else if (chosenEvent === "Trick Room") {
         currentArenaBorderColor = "#ff9ff3";
         document.getElementById("winnerAnnounce").innerText = "👁️ Trick Room Event!";
-        
-        activePokemons.forEach(p => {
-          if (p.hp > 0) {
-            p.baseSpeed *= 0.65; 
-          }
-        });
 
         const aliveList = activePokemons.filter(p => p.hp > 0);
         
-        // 2) Abilites UND Stats werden komplett getauscht
-        const statPool = aliveList.map(p => ({
+        // 2) Tausch-Pakete inkl. aller Stats erstellen
+        const swapPackages = aliveList.map(p => ({
+          type: p.type,
+          typeColor: p.typeColor,
           attack: p.attack,
           defense: p.defense,
           baseSpeed: p.baseSpeed,
@@ -647,26 +657,27 @@
           attackRange: p.attackRange,
           maxHp: p.maxHp,
           color: p.color,
-          img: p.image.src
+          imgSrc: p.image.src
         }));
-        const typesPool = aliveList.map(p => p.type);
 
-        statPool.sort(() => Math.random() - 0.5);
-        typesPool.sort(() => Math.random() - 0.5);
+        // Zuweisungen durchmischen
+        swapPackages.sort(() => Math.random() - 0.5);
         
+        // Stats & Ability zuweisen
         aliveList.forEach((p, idx) => {
-          p.type = typesPool[idx];
-          p.typeColor = typeColors[p.type] || p.color;
+          const pack = swapPackages[idx];
+          p.type = pack.type;
+          p.typeColor = pack.typeColor;
+          p.attack = pack.attack;
+          p.defense = pack.defense;
+          p.baseSpeed = pack.baseSpeed;
+          p.attackSpeed = pack.attackSpeed;
+          p.attackRange = pack.attackRange;
+          p.maxHp = pack.maxHp;
+          p.color = pack.color;
+          p.image.src = pack.imgSrc;
 
-          const newStats = statPool[idx];
-          p.attack = newStats.attack;
-          p.defense = newStats.defense;
-          p.baseSpeed = newStats.baseSpeed;
-          p.attackSpeed = newStats.attackSpeed;
-          p.attackRange = newStats.attackRange;
-          p.maxHp = newStats.maxHp;
-          p.color = newStats.color;
-          p.image.src = newStats.img;
+          p.baseSpeed *= 0.65; // Verlangsamung nach dem Tausch anwenden
         });
       } else if (chosenEvent === "Sand Storm") {
         currentArenaBorderColor = "#c2b280";
@@ -790,6 +801,8 @@
         this.attackSpeed = template.attackSpeed;
         this.attackRange = template.attackRange;
         this.type = template.type;
+        // 1) Merken der ursprünglichen Fähigkeit für den statistikfesten Counter
+        this.originalType = template.type; 
         this.attackCooldown = 0;
         this.radius = 20;
 
@@ -928,7 +941,12 @@
               radius: 8,
               ownerId: this.id
             });
-            this.seedDropCooldown = 8.0 / this.attackSpeed;
+            
+            let cdRatio = this.attackSpeed;
+            if (activeEventName && activeEventName !== "Classic") {
+              cdRatio /= 0.65;
+            }
+            this.seedDropCooldown = 8.0 / cdRatio;
           }
         }
 
@@ -1109,6 +1127,12 @@
           if (target) {
             this.attackEnemy(target);
             let effectiveAttackSpeed = this.attackSpeed;
+
+            // 3) Attack Speed während Events auf 65% reduzieren (Cooldown wird verlängert)
+            if (activeEventName && activeEventName !== "Classic") {
+              effectiveAttackSpeed /= 0.65;
+            }
+
             if (this.dragonDanceActive) {
               effectiveAttackSpeed /= 2.0; 
             }
@@ -1329,13 +1353,7 @@
 
         if (dist > 0.001) this.angle = Math.atan2(dy, dx);
 
-        // 3) Attack Speed / Projektilgeschwindigkeit auf 65% gedrosselt, sofern Event aktiv
-        let currentProjSpeed = this.baseSpeed;
-        if (activeEventName && activeEventName !== "Classic") {
-          currentProjSpeed *= 0.65;
-        }
-        const currentSpeed = currentProjSpeed * speedMultiplier;
-
+        let currentSpeed = this.baseSpeed * speedMultiplier;
         if (dist < currentSpeed) {
           this.applyImpact();
           this.hit = true;
@@ -1506,12 +1524,11 @@
       });
     }
 
-    // 6) Funktionen für das Säulendiagramm & Reset
+    // Funktionen für das Säulendiagramm & Reset
     function updateAbilityStatsChart() {
       const chartContainer = document.getElementById("abilityStatsChart");
       chartContainer.innerHTML = "";
 
-      // Sortiere absteigend nach Anzahl der Siege
       const sortedAbilities = Object.keys(abilityWinStats).sort((a, b) => abilityWinStats[b] - abilityWinStats[a]);
       const maxVal = Math.max(...Object.values(abilityWinStats), 1);
 
@@ -1685,7 +1702,6 @@
           grassySurgeTimer += deltaTime;
           if (grassySurgeTimer >= 25.0) {
             grassySurgeSecondHealDone = true;
-            // 1) Langsamerer/längerer Grassy Surge Effekt
             visualEffects.push({ type: "circle_aoe", x: centerX, y: centerY, radius: initialArenaRadius, timer: 2.5, color: "rgba(46, 213, 115, 0.3)" });
             activePokemons.forEach(p => {
               if (p.hp > 0) {
@@ -1871,11 +1887,13 @@
           if (alivePokemons.length === 1) {
             const winner = alivePokemons[0];
             winnerAnnounce.innerText = "🏆 " + winner.name + " gewinnt!";
-            // 6) Sieg für Ability in Statistik eintragen
-            if (abilityWinStats[winner.type] !== undefined) {
-              abilityWinStats[winner.type]++;
+            
+            // 1) Zähle im Counter die ursprüngliche Ability des Pokémon hoch!
+            const trackedAbility = winner.originalType || winner.type;
+            if (abilityWinStats[trackedAbility] !== undefined) {
+              abilityWinStats[trackedAbility]++;
             } else {
-              abilityWinStats[winner.type] = 1;
+              abilityWinStats[trackedAbility] = 1;
             }
             updateAbilityStatsChart();
           } else {
