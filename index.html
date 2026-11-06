@@ -344,6 +344,95 @@
     .event-option input {
       cursor: pointer;
     }
+
+    /* Duell Setup Bereich */
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 12px;
+      font-weight: bold;
+    }
+
+    .mode-selector label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #duelConfigSection {
+      background: #1e1e24;
+      border: 1px solid #2a75bb;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .duel-player-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .duel-player-row select {
+      background: #2b2b36;
+      color: #ffffff;
+      border: 1px solid #2a75bb;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Duell Panel Widget (Symmetrisch unter Damage Ranking) */
+    #duelPanelContent {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .duel-hud-container {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      gap: 6px;
+    }
+
+    .duel-hud-card {
+      background: #1e1e24;
+      border: 2px solid #2a75bb;
+      border-radius: 8px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      box-sizing: border-box;
+    }
+
+    .duel-hud-card img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .duel-hud-score {
+      font-size: 15px;
+      font-weight: bold;
+      color: #ffcb05;
+      margin-top: 2px;
+    }
+
+    .duel-hud-name {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 1px;
+    }
   </style>
 </head>
 <body>
@@ -365,23 +454,45 @@
     <div id="winnerAnnounce">Get Ready!</div>
 
     <div id="setupMenu">
-      <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
-      <div class="event-grid" id="eventSelectionList">
-        <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
-        <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
-        <label class="event-option"><input type="checkbox" value="Grassy Surge" class="event-chk" checked> Grassy</label>
-        <label class="event-option"><input type="checkbox" value="Trick Room" class="event-chk" checked> Trick</label>
-        <label class="event-option"><input type="checkbox" value="Primordial Sea" class="event-chk" checked> Sea</label>
-        <label class="event-option"><input type="checkbox" value="Sand Storm" class="event-chk" checked> Sand</label>
-        <label class="event-option"><input type="checkbox" value="Flame Charge" class="event-chk" checked> Flame</label>
-        <label class="event-option"><input type="checkbox" value="Double Iron Bash" class="event-chk" checked> Bash</label>
+      <!-- Spiel-Modus Auswahl Ganz Oben -->
+      <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Spiel-Modus:</div>
+      <div class="mode-selector">
+        <label><input type="radio" name="gameMode" value="free" checked onchange="handleGameModeChange()"> Freies Spiel</label>
+        <label><input type="radio" name="gameMode" value="duel" onchange="handleGameModeChange()"> Duell</label>
       </div>
 
-      <div style="font-weight: bold; text-align: center; margin-top: 15px; margin-bottom: 5px;">Pokemon Selection:</div>
-      <div class="pokemon-grid" id="pokemonSelectionList"></div>
-      <div class="button-group">
-        <button class="secondary" onclick="selectAll(true)">All</button>
-        <button class="secondary" onclick="selectAll(false)">None</button>
+      <!-- Duell spezifische Einstellungen -->
+      <div id="duelConfigSection" style="display: none;">
+        <div style="font-weight: bold; text-align: center; margin-bottom: 8px; color: #ffcb05;">Duell Einstellungen</div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px; font-size: 13px;">
+          <span>Spieleranzahl:</span>
+          <label><input type="radio" name="duelCount" value="2" checked onchange="updateDuelPlayerInputs()"> 2</label>
+          <label><input type="radio" name="duelCount" value="3" onchange="updateDuelPlayerInputs()"> 3</label>
+          <label><input type="radio" name="duelCount" value="4" onchange="updateDuelPlayerInputs()"> 4</label>
+        </div>
+        <div id="duelPlayerSelects"></div>
+      </div>
+
+      <!-- Freies Spiel Menü-Bereiche -->
+      <div id="freePlayConfigSection">
+        <div style="font-weight: bold; text-align: center; margin-bottom: 5px;">Event Auswahl:</div>
+        <div class="event-grid" id="eventSelectionList">
+          <label class="event-option"><input type="checkbox" id="chkStandard" checked onchange="handleStandardToggle(this)"> Standard</label>
+          <label class="event-option"><input type="checkbox" value="Classic" class="event-chk" checked> Classic</label>
+          <label class="event-option"><input type="checkbox" value="Grassy Surge" class="event-chk" checked> Grassy</label>
+          <label class="event-option"><input type="checkbox" value="Trick Room" class="event-chk" checked> Trick</label>
+          <label class="event-option"><input type="checkbox" value="Primordial Sea" class="event-chk" checked> Sea</label>
+          <label class="event-option"><input type="checkbox" value="Sand Storm" class="event-chk" checked> Sand</label>
+          <label class="event-option"><input type="checkbox" value="Flame Charge" class="event-chk" checked> Flame</label>
+          <label class="event-option"><input type="checkbox" value="Double Iron Bash" class="event-chk" checked> Bash</label>
+        </div>
+
+        <div style="font-weight: bold; text-align: center; margin-top: 15px; margin-bottom: 5px;">Pokemon Selection:</div>
+        <div class="pokemon-grid" id="pokemonSelectionList"></div>
+        <div class="button-group">
+          <button class="secondary" onclick="selectAll(true)">All</button>
+          <button class="secondary" onclick="selectAll(false)">None</button>
+        </div>
       </div>
     </div>
   </div>
@@ -409,6 +520,18 @@
     <div id="leaderboard" class="side-panel">
       <h3>📊 Damage Ranking</h3>
       <div id="leaderboardList"></div>
+
+      <!-- Duell Status Widget unter Damage Ranking -->
+      <div id="duelWidgetSection" style="border-top: 1px solid #2a75bb; padding-top: 10px; margin-top: 5px; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-weight: bold; color: #ffcb05; font-size: 13px;" id="duelRoundTitle">⚔️ Duell (0/20)</span>
+          <div style="display: flex; gap: 4px;">
+            <button class="secondary" style="padding: 2px 6px; font-size: 11px;" onclick="toggleDuelStatsView()" title="Ein-/Ausblenden">👁️</button>
+            <button class="secondary" style="padding: 2px 8px; font-size: 11px;" onclick="resetDuelStats()">Reset</button>
+          </div>
+        </div>
+        <div id="duelPanelContent"></div>
+      </div>
     </div>
   </div>
 
@@ -444,6 +567,15 @@
     let gameOver = false;
     let lastTime = 0;
     let eliminationOrder = [];
+
+    // Duell-Modus spezifische Variablen
+    let currentMode = "free"; // "free" oder "duel"
+    let duelRound = 0;
+    let duelMaxRounds = 20;
+    let duelPlayers = 2;
+    let duelSelections = []; // Index des gewählten Pokemons pro Spieler
+    let duelScores = []; // Punkte pro Spieler
+    let duelActive = false;
 
     // Event System Variablen
     let top10EventTriggered = false;
@@ -656,7 +788,6 @@
           }
         });
 
-        // REVERT: Nur Abilities werden getauscht, Stats bleiben bei den Pokemon!
         const aliveList = activePokemons.filter(p => p.hp > 0);
         const typesPool = aliveList.map(p => p.type);
         typesPool.sort(() => Math.random() - 0.5);
@@ -787,7 +918,6 @@
         this.attackSpeed = template.attackSpeed;
         this.attackRange = template.attackRange;
         this.type = template.type;
-        // Speichern der ursprünglichen Fähigkeit für den Counter
         this.originalType = template.type; 
         this.attackCooldown = 0;
         this.radius = 20;
@@ -1441,14 +1571,61 @@
       }
     }
 
-    // Toggle-Funktion für das Säulendiagramm
     function toggleAbilityStatsView() {
       const chart = document.getElementById("abilityStatsChart");
-      if (chart.style.display === "none") {
-        chart.style.display = "flex";
+      chart.style.display = (chart.style.display === "none") ? "flex" : "none";
+    }
+
+    function toggleDuelStatsView() {
+      const content = document.getElementById("duelPanelContent");
+      content.style.display = (content.style.display === "none") ? "flex" : "none";
+    }
+
+    function handleGameModeChange() {
+      const mode = document.querySelector('input[name="gameMode"]:checked').value;
+      currentMode = mode;
+      const duelSec = document.getElementById("duelConfigSection");
+      const freeSec = document.getElementById("freePlayConfigSection");
+      const duelWidget = document.getElementById("duelWidgetSection");
+
+      if (mode === "duel") {
+        duelSec.style.display = "block";
+        freeSec.style.display = "none";
+        duelWidget.style.display = "block";
+        updateDuelPlayerInputs();
       } else {
-        chart.style.display = "none";
+        duelSec.style.display = "none";
+        freeSec.style.display = "block";
+        duelWidget.style.display = "none";
       }
+    }
+
+    function updateDuelPlayerInputs() {
+      const countInput = document.querySelector('input[name="duelCount"]:checked');
+      duelPlayers = countInput ? parseInt(countInput.value) : 2;
+      const container = document.getElementById("duelPlayerSelects");
+      container.innerHTML = "";
+
+      for (let i = 0; i < duelPlayers; i++) {
+        const row = document.createElement("div");
+        row.className = "duel-player-row";
+        
+        let selectHtml = `<span style="font-weight:bold;">Spieler ${i+1}:</span><select id="duelSel_${i}">`;
+        pokemonTemplates.forEach((p, idx) => {
+          selectHtml += `<option value="${idx}">${p.name}</option>`;
+        });
+        selectHtml += `</select>`;
+        row.innerHTML = selectHtml;
+        container.appendChild(row);
+      }
+
+      // Voreinstellung mit unterschiedlichen Pokémon
+      const selects = container.querySelectorAll("select");
+      selects.forEach((sel, idx) => {
+        if (idx < pokemonTemplates.length) {
+          sel.value = idx;
+        }
+      });
     }
 
     function buildSelectionMenu() {
@@ -1552,15 +1729,106 @@
       updateAbilityStatsChart();
     }
 
-    function startSelectedMatch() {
-      const selectedIndices = Array.from(document.querySelectorAll("#pokemonSelectionList input:checked"))
-                                   .map(cb => parseInt(cb.value));
+    function updateDuelWidget() {
+      document.getElementById("duelRoundTitle").innerText = `⚔️ Duell (${duelRound}/${duelMaxRounds})`;
+      const content = document.getElementById("duelPanelContent");
+      content.innerHTML = "";
 
-      if (selectedIndices.length < 2) {
-        alert("Wähle mindestens 2 Pokémon aus!");
-        return;
+      // Kombiniere Spieler, Punkte und gewählte Pokémon-Templates, sortiere absteigend nach Punkten
+      let playerStats = [];
+      for (let i = 0; i < duelSelections.length; i++) {
+        playerStats.push({
+          playerIndex: i + 1,
+          pokemon: pokemonTemplates[duelSelections[i]],
+          score: duelScores[i] || 0
+        });
       }
+      playerStats.sort((a, b) => b.score - a.score);
 
+      const hudContainer = document.createElement("div");
+      hudContainer.className = "duel-hud-container";
+
+      playerStats.forEach(stat => {
+        const card = document.createElement("div");
+        card.className = "duel-hud-card";
+        card.innerHTML = `
+          <img src="${stat.pokemon.img}" alt="${stat.pokemon.name}">
+          <div class="duel-hud-score">${stat.score} Pkt</div>
+          <div class="duel-hud-name">Spieler ${stat.playerIndex}</div>
+        `;
+        hudContainer.appendChild(card);
+      });
+
+      content.appendChild(hudContainer);
+    }
+
+    function resetDuelStats() {
+      duelRound = 0;
+      duelScores = new Array(duelSelections.length).fill(0);
+      updateDuelWidget();
+    }
+
+    function calculatePlacementPoints(rank) {
+      if (rank === 1) return 15;
+      if (rank === 2) return 12;
+      if (rank === 3) return 10;
+      if (rank === 4) return 9;
+      if (rank === 5) return 8;
+      if (rank === 6) return 7;
+      if (rank === 7) return 6;
+      if (rank === 8) return 5;
+      if (rank === 9) return 4;
+      if (rank === 10) return 3;
+      if (rank >= 11 && rank <= 15) return 2;
+      if (rank >= 16 && rank <= 20) return 1;
+      return 0; // 21-30
+    }
+
+    function startSelectedMatch() {
+      if (currentMode === "duel") {
+        if (!duelActive) {
+          // Neues Duell starten
+          duelRound = 0;
+          duelSelections = [];
+          for (let i = 0; i < duelPlayers; i++) {
+            const selVal = parseInt(document.getElementById(`duelSel_${i}`).value);
+            duelSelections.push(selVal);
+          }
+
+          // Prüfen auf doppelte Pokémon im Duell
+          const uniqueSet = new Set(duelSelections);
+          if (uniqueSet.size < duelSelections.length) {
+            alert("Jedes Pokémon darf im Duell nur von genau einem Spieler gewählt werden!");
+            return;
+          }
+
+          duelScores = new Array(duelPlayers).fill(0);
+          duelActive = true;
+        }
+
+        if (duelRound >= duelMaxRounds) {
+          alert("Das Duell ist bereits beendet! Starte ein neues Duell oder setze die Werte zurück.");
+          return;
+        }
+
+        duelRound++;
+        // Im Duell-Modus: Standard Event-Set aktiv, alle Pokémon nehmen teil
+        setupDuelRoundBattle();
+      } else {
+        // Freies Spiel
+        const selectedIndices = Array.from(document.querySelectorAll("#pokemonSelectionList input:checked"))
+                                     .map(cb => parseInt(cb.value));
+
+        if (selectedIndices.length < 2) {
+          alert("Wähle mindestens 2 Pokémon aus!");
+          return;
+        }
+
+        setupFreePlayBattle(selectedIndices);
+      }
+    }
+
+    function setupFreePlayBattle(selectedIndices) {
       arenaRadius = initialArenaRadius;
       battleTime = 0;
       shrinkIntervalCount = 0;
@@ -1599,6 +1867,49 @@
       document.getElementById("setupMenu").style.display = "none";
       updateLeaderboard();
       updatePlacementList();
+    }
+
+    function setupDuelRoundBattle() {
+      arenaRadius = initialArenaRadius;
+      battleTime = 0;
+      shrinkIntervalCount = 0;
+      waveAmplitude = 8;
+      waveFrequency = 6;
+      wavePhase = 0;
+
+      top10EventTriggered = false;
+      activeEventName = null;
+      currentArenaBorderColor = "#ffcb05";
+      waterRiseHeight = 0;
+      grassySurgeTimer = 0;
+      grassySurgeSecondHealDone = false;
+      sandStormTimer = 0;
+      sandStormRocks = [];
+      flameChargeBurnerId = null;
+      bashMelmetal = null;
+
+      spawnBumper();
+
+      activePokemons = [];
+      projectiles = [];
+      visualEffects = [];
+      scorchTrails = [];
+      leechSeeds = [];
+      bulkUpWaves = [];
+      eliminationOrder = [];
+      gameOver = false;
+      matchStarted = true;
+      document.getElementById("winnerAnnounce").innerText = `Duell Runde ${duelRound}/${duelMaxRounds} läuft...`;
+
+      // Alle Pokémon für das Standard Event-Set laden
+      pokemonTemplates.forEach((template, id) => {
+        activePokemons.push(new Pokemon(template, id));
+      });
+
+      document.getElementById("setupMenu").style.display = "none";
+      updateLeaderboard();
+      updatePlacementList();
+      updateDuelWidget();
     }
 
     // ==========================================
@@ -1874,15 +2185,14 @@
           }
         }
 
-        const alivePokemons = activePokemons.filter(p => p.hp > 0);
-        if (alivePokemons.length <= 1 && !gameOver) {
+        const alivePokemonsList = activePokemons.filter(p => p.hp > 0);
+        if (alivePokemonsList.length <= 1 && !gameOver) {
           gameOver = true;
           const winnerAnnounce = document.getElementById("winnerAnnounce");
-          if (alivePokemons.length === 1) {
-            const winner = alivePokemons[0];
+          if (alivePokemonsList.length === 1) {
+            const winner = alivePokemonsList[0];
             winnerAnnounce.innerText = "🏆 " + winner.name + " gewinnt!";
             
-            // Verwendet starr die Ursprungs-Fähigkeit für den Zähler (z.B. Pikachu -> Thunderbolt)
             const trackedAbility = winner.originalType || winner.type;
             if (abilityWinStats[trackedAbility] !== undefined) {
               abilityWinStats[trackedAbility]++;
@@ -1892,6 +2202,52 @@
             updateAbilityStatsChart();
           } else {
             winnerAnnounce.innerText = "Unentschieden!";
+          }
+
+          // Duell Runden-Auswertung, falls im Duell-Modus
+          if (currentMode === "duel" && duelActive) {
+            // Ermittle die Platzierungen aller Pokémon in diesem Match
+            // Reihenfolge in eliminationOrder (vom ersten der stirbt bis zum Vorletzten) + das letzte lebende Pokémon auf Platz 1
+            let finalRanking = [];
+            if (alivePokemonsList.length === 1) {
+              finalRanking.push(alivePokemonsList[0]);
+            }
+            for (let i = eliminationOrder.length - 1; i >= 0; i--) {
+              finalRanking.push(eliminationOrder[i]);
+            }
+
+            // Für jeden Spieler Punkte gutschreiben basierend auf der Platzierung seines gewählten Pokemons
+            for (let pIdx = 0; pIdx < duelSelections.length; pIdx++) {
+              const chosenPokemonIndex = duelSelections[pIdx];
+              // Finde den Index im finalRanking
+              const rankIndex = finalRanking.findIndex(p => pokemonTemplates.findIndex(t => t.name === p.name) === chosenPokemonIndex);
+              const rank = (rankIndex !== -1) ? (rankIndex + 1) : finalRanking.length;
+              const pointsEarned = calculatePlacementPoints(rank);
+              duelScores[pIdx] += pointsEarned;
+            }
+
+            updateDuelWidget();
+
+            if (duelRound >= duelMaxRounds) {
+              // Finde den Spieler mit den meisten Punkten
+              let maxScore = -1;
+              let winningPlayer = 1;
+              for (let pIdx = 0; pIdx < duelScores.length; pIdx++) {
+                if (duelScores[pIdx] > maxScore) {
+                  maxScore = duelScores[pIdx];
+                  winningPlayer = pIdx + 1;
+                }
+              }
+              winnerAnnounce.innerText = `🏆 Duell beendet! Spieler ${winningPlayer} gewinnt das Duell!`;
+              duelActive = false;
+            } else {
+              // Automatisch nach kurzer Pause nächste Runde ankündigen
+              setTimeout(() => {
+                if (currentMode === "duel" && duelRound < duelMaxRounds && !matchStarted) {
+                  startSelectedMatch();
+                }
+              }, 2500);
+            }
           }
         }
 
@@ -1949,6 +2305,7 @@
 
     buildSelectionMenu();
     updateAbilityStatsChart();
+    updateDuelWidget();
     requestAnimationFrame(gameLoop);
   </script>
 
