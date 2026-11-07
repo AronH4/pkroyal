@@ -205,10 +205,32 @@
       margin-bottom: 0;
     }
 
-    #leaderboardList, #placementList {
+    #leaderboardList {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 4px 12px;
+    }
+
+    /* Placement Grid mit seitlichen Punkten */
+    #placementContainerWrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .place-row {
+      display: grid;
+      grid-template-columns: 20px 1fr 1fr 20px;
+      gap: 4px 6px;
+      align-items: center;
+    }
+
+    .place-points-label {
+      font-size: 11px;
+      color: #aaaaaa;
+      font-weight: bold;
+      text-align: center;
+      user-select: none;
     }
 
     .lb-item {
@@ -401,7 +423,7 @@
       justify-content: center;
       cursor: pointer;
       position: relative;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .duel-poke-option img {
@@ -416,10 +438,10 @@
       z-index: 10;
     }
 
+    /* Ausgewähltes Kästchen mit Neongrün als Hintergrund */
     .duel-poke-option.selected {
-      border-color: #ffcb05;
-      background: #2b2b36;
-      box-shadow: 0 0 6px rgba(255, 203, 5, 0.6);
+      background-color: #2ed573;
+      box-shadow: 0 0 8px rgba(46, 213, 115, 0.8);
     }
 
     /* Duell Status Widget unter Damage Ranking */
@@ -534,12 +556,8 @@
 
   <div class="main-container">
     <div id="placementPanel" class="side-panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a75bb; padding-bottom: 8px;">
-        <span style="font-size: 10px; color: #888;" title="1:#20 | 2:#15 | 3-4:#12 | 5-6:#10 | 7-8:#8 | 9-10:#6 | 11-12:#5 | 13-14:#4 | 15-16:#3 | 17-18:#2 | 19-20:#1 | 21-30:#0">ℹ️ Pkt-Legende</span>
-        <h3 style="margin: 0; border: none; padding: 0;">🏆 Placement</h3>
-        <span style="width: 60px;"></span>
-      </div>
-      <div id="placementList"></div>
+      <h3>🏆 Placement</h3>
+      <div id="placementContainerWrapper"></div>
       
       <!-- Ability Siege mit Toggle-Funktion -->
       <div style="border-top: 1px solid #2a75bb; padding-top: 10px; margin-top: 5px;">
@@ -641,6 +659,13 @@
       leech_seed: 0,
       dragon_dance: 0,
       bulk_up: 0
+    };
+
+    // Punktemapping je nach Platzierung (1-basiert)
+    const placementPointsMap = {
+      1: 20, 2: 15, 3: 12, 4: 12, 5: 10, 6: 10, 7: 8, 8: 8, 
+      9: 6, 10: 6, 11: 5, 12: 5, 13: 4, 14: 4, 15: 3, 16: 3, 
+      17: 2, 18: 2, 19: 1, 20: 1
     };
 
     // ==========================================
@@ -1631,7 +1656,7 @@
         duelSec.style.display = "block";
         freeSec.style.display = "none";
         duelWidget.style.display = "block";
-        duelActive = false; // Zurücksetzen für neues Duell
+        resetDuelStats();
         updateDuelPlayerInputs();
       } else {
         duelSec.style.display = "none";
@@ -1646,7 +1671,9 @@
       const container = document.getElementById("duelPlayerSelects");
       container.innerHTML = "";
 
-      // Vorherige Auswahlen beibehalten oder sinnvoll vorbelegen
+      // Wenn Einstellungen geändert werden -> Duell-Stats zurücksetzen
+      resetDuelStats();
+
       if (duelSelections.length !== duelPlayers) {
         duelSelections = [];
         for (let i = 0; i < duelPlayers; i++) {
@@ -1670,21 +1697,21 @@
           const pokeOpt = document.createElement("div");
           pokeOpt.className = "duel-poke-option" + (duelSelections[i] === pIdx ? " selected" : "");
           pokeOpt.title = p.name;
-          pokeOpt.style.borderColor = duelSelections[i] === pIdx ? "#ffcb05" : abilityColor;
+          pokeOpt.style.borderColor = abilityColor;
           
           pokeOpt.innerHTML = `<img src="${p.img}" alt="${p.name}">`;
           
           pokeOpt.onclick = () => {
             duelSelections[i] = pIdx;
-            // Grid für diesen Spieler aktualisieren
+            // Ändern der Auswahl führt zu komplett neuem Duell-Reset
+            resetDuelStats();
+
             const optionsInGrid = gridContainer.querySelectorAll(".duel-poke-option");
             optionsInGrid.forEach((opt, idx) => {
               if (idx === pIdx) {
                 opt.classList.add("selected");
-                opt.style.borderColor = "#ffcb05";
               } else {
                 opt.classList.remove("selected");
-                opt.style.borderColor = typeColors[pokemonTemplates[idx].type] || pokemonTemplates[idx].color;
               }
             });
           };
@@ -1734,32 +1761,56 @@
       });
     }
 
-    function updatePlacementList() {
-      const placementContainer = document.getElementById("placementList");
-      const total = activePokemons.length;
-      const alive = activePokemons.filter(p => p.hp > 0);
-      const list = [];
-      
-      alive.forEach(p => list.push({ pokemon: p, isAlive: true }));
-      for (let i = eliminationOrder.length - 1; i >= 0; i--) {
-        list.push({ pokemon: eliminationOrder[i], isAlive: false, rank: total - i });
-      }
-
-      placementContainer.innerHTML = "";
-      list.forEach((item) => {
-        const rankText = item.isAlive ? (alive.length === 1 && eliminationOrder.length === total - 1 ? "#1" : "●") : `#${item.rank}`;
-        const div = document.createElement("div");
-        div.className = "place-item " + (item.isAlive ? "alive" : "dead");
-        div.innerHTML = `
+    function createPlaceItemHTML(item) {
+      const rankText = item.isAlive ? (item.aliveCount === 1 && item.totalEliminated === item.totalCount - 1 ? "#1" : "●") : `#${item.rank}`;
+      return `
+        <div class="place-item ${item.isAlive ? "alive" : "dead"}">
           <div class="place-info">
             <span class="place-rank">${rankText}</span>
             <span style="display:inline-block; width:8px; height:8px; background:${item.pokemon.typeColor}; border-radius:50%; flex-shrink:0;"></span>
             <span style="font-weight: bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.pokemon.name}</span>
           </div>
           <span style="font-size:11px; color:#aaa; margin-left:4px;">${item.isAlive ? Math.ceil(item.pokemon.hp) + "HP" : "K.O."}</span>
+        </div>
+      `;
+    }
+
+    function updatePlacementList() {
+      const wrapper = document.getElementById("placementContainerWrapper");
+      const total = activePokemons.length;
+      const alive = activePokemons.filter(p => p.hp > 0);
+      const list = [];
+      
+      alive.forEach(p => list.push({ pokemon: p, isAlive: true, aliveCount: alive.length, totalEliminated: eliminationOrder.length, totalCount: total }));
+      for (let i = eliminationOrder.length - 1; i >= 0; i--) {
+        list.push({ pokemon: eliminationOrder[i], isAlive: false, rank: total - i });
+      }
+
+      wrapper.innerHTML = "";
+
+      // In 2er Zeilen mit seitlichen Punkteanzeigen gruppieren
+      for (let i = 0; i < list.length; i += 2) {
+        const item1 = list[i];
+        const item2 = list[i + 1];
+
+        const rank1 = item1 ? (item1.isAlive ? 1 : item1.rank) : null;
+        const rank2 = item2 ? (item2.isAlive ? 2 : item2.rank) : null;
+
+        const pts1 = rank1 && placementPointsMap[rank1] !== undefined ? placementPointsMap[rank1] : 0;
+        const pts2 = rank2 && placementPointsMap[rank2] !== undefined ? placementPointsMap[rank2] : 0;
+
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "place-row";
+        
+        rowDiv.innerHTML = `
+          <div class="place-points-label">${pts1 > 0 || rank1 === 19 || rank1 === 20 ? pts1 : ''}</div>
+          <div>${item1 ? createPlaceItemHTML(item1) : ''}</div>
+          <div>${item2 ? createPlaceItemHTML(item2) : ''}</div>
+          <div class="place-points-label">${pts2 > 0 ? pts2 : ''}</div>
         `;
-        placementContainer.appendChild(div);
-      });
+
+        wrapper.appendChild(rowDiv);
+      }
     }
 
     function updateAbilityStatsChart() {
@@ -1832,27 +1883,20 @@
       duelActive = false;
       duelScores = new Array(duelSelections.length).fill(0);
       updateDuelWidget();
-      document.getElementById("winnerAnnounce").innerText = "Duell zurückgesetzt. Bereit!";
+      if (currentMode === "duel") {
+        document.getElementById("winnerAnnounce").innerText = "Duell bereit!";
+      }
     }
 
     function calculatePlacementPoints(rank) {
-      if (rank === 1) return 20;
-      if (rank === 2) return 15;
-      if (rank >= 3 && rank <= 4) return 12;
-      if (rank >= 5 && rank <= 6) return 10;
-      if (rank >= 7 && rank <= 8) return 8;
-      if (rank >= 9 && rank <= 10) return 6;
-      if (rank >= 11 && rank <= 12) return 5;
-      if (rank >= 13 && rank <= 14) return 4;
-      if (rank >= 15 && rank <= 16) return 3;
-      if (rank >= 17 && rank <= 18) return 2;
-      if (rank >= 19 && rank <= 20) return 1;
-      return 0; // 21 - X (30)
+      if (placementPointsMap[rank] !== undefined) {
+        return placementPointsMap[rank];
+      }
+      return 0; // Platz 21-30
     }
 
     function startSelectedMatch() {
       if (currentMode === "duel") {
-        // Prüfen, ob Anzahl Spieler geändert wurde oder ein neues Duell gestartet wird
         const countInput = document.querySelector('input[name="duelCount"]:checked');
         const newPlayerCount = countInput ? parseInt(countInput.value) : 2;
         
@@ -1872,6 +1916,7 @@
 
         if (duelRound >= duelMaxRounds) {
           resetDuelStats();
+          duelActive = true;
         }
 
         duelRound++;
@@ -2359,6 +2404,7 @@
 
     buildSelectionMenu();
     updateAbilityStatsChart();
+    updatePlacementList();
     updateDuelWidget();
     requestAnimationFrame(gameLoop);
   </script>
